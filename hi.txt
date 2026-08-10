@@ -1,0 +1,3 @@
+  <div class="photo-block">
+        <img src="<?= htmlspecialchars($photoPath) ?>" class="passport-photo" alt="photo">
+    </div>

@@ -12,20 +12,13 @@
 ?>
 <div class="card-front">
     <?php include TEMPLATES_PATH . '/partials/header_logo.php'; ?>
+    <?php 
+        $middlePhotoPath = $photoPath;
+        include TEMPLATES_PATH . '/partials/middle.php'; ?>
 
-    <div class="photo-block">
-        <img src="<?= htmlspecialchars($photoPath) ?>" class="passport-photo" alt="photo">
-    </div>
 
-    <div class="details">
-        <div class="name"><?= htmlspecialchars($student['full_name']) ?></div>
-        <div class="matric">Matric No: <?= htmlspecialchars($student['matric_no']) ?></div>
-        <div class="dept"><?= htmlspecialchars($student['department']) ?></div>
-        <div class="programme"><?= htmlspecialchars($student['programme']) ?></div>
-        <div class="college"><?= htmlspecialchars($college['name']) ?></div>
-    </div>
+    <?php include TEMPLATES_PATH . '/partials/footer2.php'; ?>
 
-    <?php include TEMPLATES_PATH . '/partials/footer.php'; ?>
 </div>
 <style>
     .card-front {
@@ -58,4 +51,5 @@
     .details > div {
         margin-bottom: 0.8mm;
     }
+
 </style>

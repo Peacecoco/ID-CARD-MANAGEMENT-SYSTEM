@@ -10,29 +10,29 @@
 // Expects in scope: $student (array)
 // ============================================================
 ?>
+
+<div class="student">STUDENT</div>
+
 <div class="card-back">
-    <div class="line">This is to certify that the bearer whose</div>
-    <div class="line">picture appears on this card is a </div>
-    <div class="line">student of Covenant University.</div>
+    <div class="line">This is to certify that the bearer</div>
+    <div class="line">whose picture appears on this</div>
+    <div class="line">card is a Student in</div>
+    <div class="line">COVENANT UNIVERSITY.</div>
     <div class="line">No person(s) unless authorized</div>
-    <div class="line">by the above instituional authority.</div>
+    <div class="line">by the above instituional authority</div>
     <div class="line">may hold or possess the card.</div>
     <div class="line">Please if found kindly return </div>
     <div class="line">to the Registrar,</div>
     <div class="line">COVENANT UNIVERSITY</div>
-    <div class="line">Km. 10 Idiroko Road, Canaan Land,</div>
-    <div class="line">P.M.B 1023,Ota ,Ogun State, Nigeria.</div>
-    <div class="line">Tel: +234-8115762473, 08171613173,</div>
-    <div class="line">07066553483</div>
-    <div class="line">registrar@covenantuniversity.edu.ng</div>
+    <div class="line">Canaan land, Km. 10 Idiroko</div>
+    <div class="line">Rd,Ota ,Ogun State.</div>
+    <div class="line">Tel: 7900724</div>
     <div class="signature-area">
         <img
             src="<?= htmlspecialchars(__DIR__ . '/../../assets/images/registrar_signature.png') ?>"
             class="registrar-signature"
             alt="Registrar's Signature"
         >
-
-        <div class="signature-line">________________________</div>
         <div class="signature-label">Registrar's Signature</div>
     </div>
     
@@ -52,12 +52,23 @@
         font-weight: bold;
     }
     .card-back .line {
-        margin-bottom: 1.5mm;
+        margin-bottom: 1mm;
+    }
+    
+    .student {
+        font-size: 20px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        text-align: center;
+        font-weight: bold;
+        font-family: Arial, sans-serif;
+        background-color: #000000;
+        color: #ffffff;
     }
 
     /* Signature section */
     .signature-area {
-        margin-top: 1.5mm;
+        margin-top: 1mm;
         text-align: center;
     }
 
