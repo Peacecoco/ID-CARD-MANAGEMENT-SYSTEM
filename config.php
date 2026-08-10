@@ -1,0 +1,31 @@
+<?php
+// ============================================================
+// config.php - central configuration
+// ============================================================
+
+// --- Database ---
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'idcard_system');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+
+// --- Paths ---
+define('BASE_PATH', __DIR__);
+define('TEMPLATES_PATH', BASE_PATH . '/templates');
+define('OUTPUT_PATH', BASE_PATH . '/output');
+define('UPLOADS_PATH', BASE_PATH . '/uploads/photos');
+define('PROCESSED_PHOTOS_PATH', BASE_PATH . '/uploads/photos_processed');
+
+// --- Card dimensions (CR80 standard, in mm) ---
+// Adjust these if the university's card stock differs.
+define('CARD_WIDTH_MM', 54);
+define('CARD_HEIGHT_MM', 86);
+
+// --- Photo processing target size (matches print size, avoids over-embedding resolution) ---
+define('PHOTO_TARGET_WIDTH_PX', 260);   // ~22mm at 300dpi
+define('PHOTO_TARGET_HEIGHT_PX', 307);  // ~26mm at 300dpi
+define('PHOTO_JPEG_QUALITY', 88);       // visually lossless, keeps file size sane
+
+// --- Error reporting (disable display_errors in production) ---
+error_reporting(E_ALL);
+ini_set('display_errors', '1');
