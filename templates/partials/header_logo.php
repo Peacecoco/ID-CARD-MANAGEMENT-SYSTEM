@@ -36,14 +36,16 @@
     width: 100%;
     background-color: <?= htmlspecialchars($college['primary_color']) ?>;
     color: #ffffff;
-    padding: 3mm;
+    padding: 2mm;
     box-sizing: border-box;
+    flex-shrink: 0;
 }
 
 .header-table {
     width: 100%;
     border-collapse: collapse;
     border-spacing: 0;
+    line-height: 0;
 }
 
 .logo-cell {

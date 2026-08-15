@@ -11,45 +11,48 @@
 // ============================================================
 ?>
 <div class="card-front">
-    <?php include TEMPLATES_PATH . '/partials/header_logo.php'; ?>
-    <?php 
-        $middlePhotoPath = $photoPath;
-        include TEMPLATES_PATH . '/partials/middle.php'; ?>
+    <div class="card-inner">
+        <?php include TEMPLATES_PATH . '/partials/header_logo.php'; ?>
 
-
-    <?php include TEMPLATES_PATH . '/partials/footer2.php'; ?>
+        <div class="content-area">
+            <?php $middlePhotoPath = $photoPath; include TEMPLATES_PATH . '/partials/middle.php'; ?>
+        </div>
+        <div class="footer-wrap">
+            <?php include TEMPLATES_PATH . '/partials/footer2.php'; ?>
+        </div>
+    </div>
 
 </div>
 <style>
     .card-front {
         width: <?= CARD_WIDTH_MM ?>mm;
         height: <?= CARD_HEIGHT_MM ?>mm;
-        position: relative;
-        font-family: Arial, sans-serif;
         box-sizing: border-box;
-    }
-    .photo-block {
-        text-align: center;
-        margin-top: 3mm;
-    }
-    .passport-photo {
-        width: 22mm;
-        height: 26mm;
-        object-fit: cover;
-        border: 0.3mm solid #cccccc;
-    }
-    .details {
-        padding: 3mm;
-        font-size: 8pt;
-        color: #111111;
-    }
-    .details .name {
-        font-weight: bold;
-        font-size: 9pt;
-        margin-bottom: 1mm;
-    }
-    .details > div {
-        margin-bottom: 0.8mm;
+        overflow: hidden;
+        background: #fff;
+        margin: 0;
+        padding: 0;
     }
 
+    .card-inner {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        margin: 0;
+        padding: 0;
+    }
+
+    .content-area {
+        flex: 0 0 auto;
+        margin: 0;
+        padding: 0;
+    }
+
+    .footer-wrap {
+        flex: 1;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
 </style>
