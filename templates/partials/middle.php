@@ -1,16 +1,10 @@
 <?php
 ?>
-
 <div class="container">
 
     <table>
         <tr>
-            <td>
-                <img
-                    src="<?= htmlspecialchars(__DIR__ . '/../../assets/images/cu_building.jpg') ?>"
-                    width="100%"
-                    class="building-img">
-            </td>
+            <td class="building-cell"></td>
             <td class="details">
                 <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
@@ -40,13 +34,21 @@
 <style>
     .container {
         width: 100%;
-        height: 42mm;
+        height: <?= MIDDLE_HEIGHT_MM ?>mm;
         box-sizing: border-box;
         flex-shrink: 0;
         margin: 0;
         padding: 0;
     }
 
+    .building-cell {
+    width: 50%;              
+    height: <?= MIDDLE_HEIGHT_MM ?>mm;
+    background-image: url('<?= htmlspecialchars(__DIR__ . '/../../assets/images/cu_building.jpg') ?>');
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+}
     table {
         width: 100%;
         border-collapse: collapse;
@@ -54,6 +56,11 @@
         line-height: 0;
         margin: 0;
         padding: 0;
+        height: 100%;
+    }
+
+    tr{
+        height: 100%;
     }
 
     td {
@@ -63,7 +70,10 @@
     }
 
     .details {
-        background-color: red;
+        background-color: <?= htmlspecialchars(
+    $college['primary_color'] ?? '#ff0000'
+) ?>;
+        width: 50%;
     }
 
     .details .item {

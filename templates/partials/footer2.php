@@ -1,5 +1,6 @@
 <?php
 $footerImage = __DIR__ . '/../../assets/images/image.png';
+$collegeImagePath = __DIR__ . '/../../' . ltrim($college['logo_path'], '/');
 ?>
 
 <div class="footer-wrapper">
@@ -8,7 +9,7 @@ $footerImage = __DIR__ . '/../../assets/images/image.png';
         cellpadding="0"
         cellspacing="0"
         border="0"
-        style="background-image: url('<?= htmlspecialchars($footerImage) ?>'); background-repeat: no-repeat; background-size: cover; background-position: center;">
+        style="background-image: url('<?= htmlspecialchars($collegeImagePath) ?>'); background-repeat: no-repeat; background-size: cover; background-position: center;">
         <tr class="footer-row">
             <td class="footer-year">
                 <svg class="vertical-svg" width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">

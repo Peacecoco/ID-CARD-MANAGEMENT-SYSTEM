@@ -12,7 +12,9 @@
 ?>
 <div class="card-front">
     <div class="card-inner">
-        <?php include TEMPLATES_PATH . '/partials/header_logo.php'; ?>
+        <div>
+            <?php include TEMPLATES_PATH . '/partials/header_logo.php'; ?>
+        </div>
 
         <div class="content-area">
             <?php $middlePhotoPath = $photoPath; include TEMPLATES_PATH . '/partials/middle.php'; ?>
@@ -29,7 +31,7 @@
         height: <?= CARD_HEIGHT_MM ?>mm;
         box-sizing: border-box;
         overflow: hidden;
-        background: #fff;
+        /* background: #fff; */
         margin: 0;
         padding: 0;
     }
@@ -37,22 +39,22 @@
     .card-inner {
         width: 100%;
         height: 100%;
-        display: flex;
-        flex-direction: column;
+        display: block;
         margin: 0;
         padding: 0;
     }
 
     .content-area {
-        flex: 0 0 auto;
+        width: 100%;
+        height: <?= MIDDLE_HEIGHT_MM ?>mm;
         margin: 0;
         padding: 0;
     }
 
     .footer-wrap {
-        flex: 1;
+       height: <?= CARD_HEIGHT_MM - HEADER_HEIGHT_MM - MIDDLE_HEIGHT_MM ?>mm;
         width: 100%;
         margin: 0;
         padding: 0;
-    }
+}
 </style>

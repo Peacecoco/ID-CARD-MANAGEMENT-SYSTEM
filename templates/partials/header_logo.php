@@ -34,7 +34,7 @@
 
 .card-header {
     width: 100%;
-    background-color: <?= htmlspecialchars($college['primary_color']) ?>;
+    background-color: #1a3fa0;
     color: #ffffff;
     padding: 2mm;
     box-sizing: border-box;

@@ -20,6 +20,10 @@ define('PROCESSED_PHOTOS_PATH', BASE_PATH . '/uploads/photos_processed');
 // Adjust these if the university's card stock differs.
 define('CARD_WIDTH_MM', 54);
 define('CARD_HEIGHT_MM', 86);
+define('HEADER_HEIGHT_MM', 20);
+define('MIDDLE_HEIGHT_MM', 42);
+define('FOOTER_HEIGHT_MM', 24);
+
 
 // --- Photo processing target size (matches print size, avoids over-embedding resolution) ---
 define('PHOTO_TARGET_WIDTH_PX', 260);   // ~22mm at 300dpi
