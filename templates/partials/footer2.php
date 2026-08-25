@@ -3,19 +3,14 @@ $footerImage = __DIR__ . '/../../assets/images/image.png';
 $collegeImagePath = __DIR__ . '/../../' . ltrim($college['logo_path'], '/');
 ?>
 
-<div class="footer-wrapper">
-    <table class="footer-table"
-        width="100%"
-        cellpadding="0"
-        cellspacing="0"
-        border="0"
-        style="background-image: url('<?= htmlspecialchars($collegeImagePath) ?>'); background-repeat: no-repeat; background-size: cover; background-position: center;">
+<div class="footer-wrapper" style="background-image: url('<?= htmlspecialchars($collegeImagePath) ?>');">
+    <table class="footer-table" width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr class="footer-row">
             <td class="footer-year">
                 <svg class="vertical-svg" width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
                     <text x="60" y="60" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 60 60)" style="font-family: Arial, sans-serif; font-size:18pt; font-weight:bold; fill:#000000;"><?= htmlspecialchars(
-    $student['validity_start'] . '-' . $student['validity_end']
-) ?></text>
+                        $student['validity_start'] . '-' . $student['validity_end']
+                    ) ?></text>
                 </svg>
             </td>
 
@@ -37,11 +32,17 @@ $collegeImagePath = __DIR__ . '/../../' . ltrim($college['logo_path'], '/');
 
 <style>
     .footer-wrapper {
+        position: relative;
         width: 100%;
-        height: 100%;
+        height: <?= FOOTER_HEIGHT_MM ?>mm;
         overflow: hidden;
         margin: 0;
         padding: 0;
+        background-repeat: no-repeat;
+        background-size: 100% 100%;
+        background-position: center;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
     }
 
     .footer-table {
