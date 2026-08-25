@@ -23,6 +23,9 @@ define('CARD_HEIGHT_MM', 86);
 define('HEADER_HEIGHT_MM', 20);
 define('MIDDLE_HEIGHT_MM', 42);
 define('FOOTER_HEIGHT_MM', 24);
+// define('HEADER_HEIGHT_MM', 22.26);
+// define('MIDDLE_HEIGHT_MM', 27.39);
+// define('FOOTER_HEIGHT_MM', 35.95);
 
 
 // --- Photo processing target size (matches print size, avoids over-embedding resolution) ---

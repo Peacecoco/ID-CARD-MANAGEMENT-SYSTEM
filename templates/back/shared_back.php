@@ -34,6 +34,11 @@
             alt="Registrar's Signature"
         >
         <div class="signature-label">Registrar's Signature</div>
+        <img
+            src="<?= htmlspecialchars(__DIR__ . '/../../assets/images/registrar_barcode.png') ?>"
+            class="registrar-barcode"
+            alt="Barcode"
+        >
     </div>
     
 </div>
@@ -52,7 +57,7 @@
         font-weight: bold;
     }
     .card-back .line {
-        margin-bottom: 1mm;
+        margin-bottom: 0.8mm;
     }
     
     .student {
@@ -74,7 +79,7 @@
 
     .registrar-signature {
         width: 22mm;
-        height: 7mm;
+        height: 4mm;
         display: block;
         margin: 0 auto;
     }

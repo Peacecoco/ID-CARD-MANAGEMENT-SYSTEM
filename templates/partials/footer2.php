@@ -91,11 +91,11 @@ $collegeImagePath = __DIR__ . '/../../' . ltrim($college['logo_path'], '/');
     }
 
     .footer-student-photo {
-        display: block;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        margin: 0 auto;
-        padding: 0;
-    }
+    display: block;
+    width: 100%;
+    height: 85%;
+    object-fit: cover;
+    margin: 7.5% auto;
+    padding: 0;
+}
 </style>
