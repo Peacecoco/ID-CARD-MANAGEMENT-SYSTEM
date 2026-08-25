@@ -1,9 +1,13 @@
 <?php
 $footerImage = __DIR__ . '/../../assets/images/image.png';
 $collegeImagePath = __DIR__ . '/../../' . ltrim($college['logo_path'], '/');
+$primaryColor = $college['primary_color'] ?? '#ffffff';
+// Prefer a small logo; fall back to bundled university-logo.png
+$smallLogo = file_exists($collegeImagePath) ? $collegeImagePath : __DIR__ . '/../../assets/images/university-logo.png';
 ?>
 
-<div class="footer-wrapper" style="background-image: url('<?= htmlspecialchars($collegeImagePath) ?>');">
+<div class="footer-wrapper" style="background-color: <?= htmlspecialchars($primaryColor) ?>;">
+    <img src="<?= htmlspecialchars($smallLogo) ?>" class="footer-logo" alt="Logo">
     <table class="footer-table" width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr class="footer-row">
             <td class="footer-year">
@@ -38,8 +42,9 @@ $collegeImagePath = __DIR__ . '/../../' . ltrim($college['logo_path'], '/');
         overflow: hidden;
         margin: 0;
         padding: 0;
+        /* footer background is a CSS fill + small logo to avoid full-card rasters */
         background-repeat: no-repeat;
-        background-size: 100% 100%;
+        background-size: auto;
         background-position: center;
         print-color-adjust: exact;
         -webkit-print-color-adjust: exact;
@@ -98,4 +103,14 @@ $collegeImagePath = __DIR__ . '/../../' . ltrim($college['logo_path'], '/');
     margin: 7.5% auto;
     padding: 0;
 }
+
+    .footer-logo {
+        position: absolute;
+        right: 2mm;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 10mm;
+        height: auto;
+        display: block;
+    }
 </style>
