@@ -14,6 +14,13 @@ $pdo = new PDO(
 );
 
 $collegeOptions = [];
+$defaultCollegeOptions = [
+    1 => 'Engineering',
+    2 => 'Management Sciences',
+    3 => 'Science',
+    4 => 'Leadership',
+];
+
 try {
     $collegeRows = $database->getAllColleges();
     foreach ($collegeRows as $college) {
@@ -21,68 +28,32 @@ try {
         if (!in_array($collegeId, [1, 2, 3, 4], true)) {
             continue;
         }
-        $collegeOptions[$collegeId] = $college['name'] ?? 'College';
+        $collegeOptions[$collegeId] = $college['name'] ?? $defaultCollegeOptions[$collegeId] ?? 'College';
     }
 } catch (Throwable $exception) {
-    $collegeOptions = [
-        1 => 'Engineering',
-        2 => 'Management Sciences',
-        3 => 'Science',
-        4 => 'Leadership',
-    ];
+    $collegeOptions = $defaultCollegeOptions;
 }
 
 if (empty($collegeOptions)) {
-    $collegeOptions = [
-        1 => 'Engineering',
-        2 => 'Management Sciences',
-        3 => 'Science',
-        4 => 'Leadership',
-    ];
+    $collegeOptions = $defaultCollegeOptions;
 }
 
-$selectedCollegeId = 0;
-$studentSearch = '';
-$searchResults = [];
-$searchMessage = '';
-$searchError = '';
+$selectedCollegeId = filter_input(INPUT_GET, 'college_id', FILTER_VALIDATE_INT) ?: 0;
+$studentsForCollege = [];
+$studentLoadError = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search_students'])) {
-    $selectedCollegeId = filter_input(INPUT_POST, 'college_id', FILTER_VALIDATE_INT) ?: 0;
-    $studentSearch = trim((string) ($_POST['student_name'] ?? ''));
-
-    if ($selectedCollegeId <= 0) {
-        $searchError = 'Please select a college before searching.';
-    } else {
-        try {
-            $studentSearchPattern = $studentSearch === '' ? '%' : '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $studentSearch) . '%';
-
-            $sql = 'SELECT s.id, s.full_name, s.matric_no, s.department, s.programme, s.status, c.name AS college_name
-                    FROM students s
-                    INNER JOIN colleges c ON c.id = s.college_id
-                    WHERE s.college_id = :college_id
-                    AND s.full_name LIKE :full_name
-                    ORDER BY s.full_name
-                    LIMIT 50';
-
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([
-                ':college_id' => $selectedCollegeId,
-                ':full_name' => $studentSearchPattern,
-            ]);
-
-            $searchResults = $stmt->fetchAll();
-
-            if ($studentSearch === '') {
-                $searchMessage = 'Showing all students in the selected college.';
-            } elseif (empty($searchResults)) {
-                $searchMessage = 'No matching student record was found for this college.';
-            } else {
-                $searchMessage = 'Search completed successfully.';
-            }
-        } catch (Throwable $exception) {
-            $searchError = 'Unable to load students for this college. Please try again.';
-        }
+if ($selectedCollegeId > 0) {
+    try {
+        $stmt = $pdo->prepare(
+            'SELECT id, full_name, matric_no, photo_path
+             FROM students
+             WHERE college_id = :college_id AND status = "active"
+             ORDER BY full_name ASC'
+        );
+        $stmt->execute([':college_id' => $selectedCollegeId]);
+        $studentsForCollege = $stmt->fetchAll();
+    } catch (Throwable $exception) {
+        $studentLoadError = 'Unable to load students for this college.';
     }
 }
 
@@ -869,12 +840,12 @@ $menuGroups = [
                 <h1 id="page-title">Permanent ID Card Generator</h1>
                 <p class="subtitle">Filter and generate a student's temporary ID card</p>
 
-                <form id="idCardForm" class="generator-panel" method="post" novalidate>
+                <form id="collegeForm" class="generator-panel" method="get" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">
                     <div class="form-grid">
                         <div class="field full">
                             <div class="field-head">College and level</div>
                             <div class="input-shell">
-                                <select name="college_id" id="college_id" required>
+                                <select name="college_id" id="college_id" required onchange="this.form.submit()">
                                     <option value="">Select college</option>
                                     <?php foreach ($collegeOptions as $collegeId => $collegeName): ?>
                                         <option value="<?php echo (int) $collegeId; ?>" <?php echo ($selectedCollegeId === (int) $collegeId) ? 'selected' : ''; ?>>
@@ -884,70 +855,58 @@ $menuGroups = [
                                 </select>
                             </div>
                         </div>
-
-                        <div class="field">
-                            <label class="field-label" for="student_name">Student name</label>
-                            <div class="input-shell">
-                                <input type="text" id="student_name" name="student_name" value="<?php echo htmlspecialchars($studentSearch); ?>" placeholder="Type student name..." />
-                            </div>
-                        </div>
-
-                        <div class="field">
-                            <label class="field-label" for="matric_no">Matric / ID</label>
-                            <div class="input-shell">
-                                <input type="text" id="matric_no" name="matric_no" placeholder="Optional matric number..." />
-                            </div>
-                        </div>
                     </div>
 
                     <div class="helper-row" id="helperRow">
-                        <?php if ($searchError !== ''): ?>
-                            <span style="color: #d06a65;"><?php echo htmlspecialchars($searchError); ?></span>
-                        <?php elseif ($searchMessage !== ''): ?>
-                            <?php echo htmlspecialchars($searchMessage); ?>
+                        <?php if ($studentLoadError !== ''): ?>
+                            <span style="color: #d06a65;"><?php echo htmlspecialchars($studentLoadError); ?></span>
+                        <?php elseif ($selectedCollegeId > 0 && empty($studentsForCollege)): ?>
+                            No active students were found for this college.
+                        <?php elseif ($selectedCollegeId > 0): ?>
+                            Students are loaded for the selected college.
                         <?php else: ?>
-                            Fill the college and student name to search by student record.
+                            Select a college to load students for that college.
                         <?php endif; ?>
                     </div>
 
-                    <div class="status-message <?php echo $searchError !== '' ? 'error' : ''; ?>" id="statusMessage" aria-live="polite">
-                        <?php echo $searchError !== '' ? htmlspecialchars($searchError) : ''; ?>
-                    </div>
-
-                    <div class="action-row">
-                        <button type="submit" class="btn primary" name="search_students" value="1" id="generateBtn">Search Students</button>
-                        <button type="reset" class="btn secondary" id="resetBtn">Reset</button>
-                    </div>
+                    <?php if ($selectedCollegeId > 0 && !empty($studentsForCollege)): ?>
+                        <div class="action-row">
+                            <a class="btn primary" href="generate_batch.php?college_id=<?php echo (int) $selectedCollegeId; ?>">Download PDF</a>
+                        </div>
+                    <?php endif; ?>
                 </form>
 
                 <div class="preview-box" aria-live="polite">
                     <div class="preview-inner" id="previewState">
-                        <?php if (!empty($searchResults)): ?>
-                            <table class="results-table" aria-label="Student search results">
+                        <?php if ($selectedCollegeId > 0 && !empty($studentsForCollege)): ?>
+                            <table class="results-table" aria-label="Students for the selected college">
                                 <thead>
                                     <tr>
-                                        <th>Student</th>
-                                        <th>Matric No.</th>
-                                        <th>Department</th>
-                                        <th>Programme</th>
-                                        <th>Status</th>
+                                        <th>Student Image</th>
+                                        <th>Student Name</th>
+                                        <th>Matric No</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($searchResults as $student): ?>
+                                    <?php foreach ($studentsForCollege as $student): ?>
                                         <tr>
+                                            <td>
+                                                <?php $studentImage = $student['photo_path'] ?? ''; ?>
+                                                <?php if (trim((string) $studentImage) !== ''): ?>
+                                                    <img class="student-photo" src="<?php echo htmlspecialchars($studentImage); ?>" alt="<?php echo htmlspecialchars($student['full_name'] ?? 'Student photo'); ?>" />
+                                                <?php else: ?>
+                                                    <div class="placeholder-icon" aria-hidden="true"></div>
+                                                <?php endif; ?>
+                                            </td>
                                             <td><?php echo htmlspecialchars($student['full_name'] ?? 'N/A'); ?></td>
                                             <td><?php echo htmlspecialchars($student['matric_no'] ?? 'N/A'); ?></td>
-                                            <td><?php echo htmlspecialchars($student['department'] ?? 'N/A'); ?></td>
-                                            <td><?php echo htmlspecialchars($student['programme'] ?? 'N/A'); ?></td>
-                                            <td><span class="result-badge"><?php echo htmlspecialchars($student['status'] ?? 'active'); ?></span></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
                         <?php else: ?>
                             <div class="placeholder-icon" aria-hidden="true"></div>
-                            <div class="preview-message">Select a college and search by full name to preview matching students.</div>
+                            <div class="preview-message">Select a college to load and preview students for that college.</div>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -955,59 +914,5 @@ $menuGroups = [
         </main>
     </div>
 
-    <script>
-        (function () {
-            const form = document.getElementById('idCardForm');
-            const collegeSelect = document.getElementById('college_id');
-            const studentName = document.getElementById('student_name');
-            const statusMessage = document.getElementById('statusMessage');
-            const helperRow = document.getElementById('helperRow');
-            const searchButton = document.getElementById('generateBtn');
-
-            function updateSearchState() {
-                const collegeSelected = collegeSelect.value !== '';
-                const nameEntered = studentName.value.trim() !== '';
-                const ready = collegeSelected && nameEntered;
-
-                searchButton.disabled = !ready;
-                searchButton.style.opacity = ready ? '1' : '0.72';
-                searchButton.style.cursor = ready ? 'pointer' : 'not-allowed';
-
-                if (collegeSelected && nameEntered) {
-                    if (helperRow) {
-                        helperRow.textContent = 'Ready to search students in the selected college.';
-                    }
-                } else if (collegeSelected) {
-                    if (helperRow) {
-                        helperRow.textContent = 'Type a student name to search by full_name.';
-                    }
-                } else {
-                    if (helperRow) {
-                        helperRow.textContent = 'Select a college and student name to search.';
-                    }
-                }
-            }
-
-            [collegeSelect, studentName].forEach(function (element) {
-                element.addEventListener('input', updateSearchState);
-                element.addEventListener('change', updateSearchState);
-            });
-
-            form.addEventListener('reset', function () {
-                window.setTimeout(function () {
-                    statusMessage.textContent = '';
-                    statusMessage.classList.remove('error');
-                    if (helperRow) {
-                        helperRow.textContent = 'Select a college and student name to search.';
-                    }
-                    searchButton.disabled = true;
-                    searchButton.style.opacity = '0.72';
-                    searchButton.style.cursor = 'not-allowed';
-                }, 0);
-            });
-
-            updateSearchState();
-        })();
-    </script>
 </body>
 </html>
