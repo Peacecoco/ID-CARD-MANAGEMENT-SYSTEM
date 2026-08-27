@@ -1,5 +1,5 @@
 <?php
-$buildingImage = __DIR__ . '/../../assets/images/cu_building.jpg';
+$buildingImage = mpdfAssetUri(__DIR__ . '/../../assets/images/cu_building.jpg');
 ?>
 <div class="container">
     <table class="middle-table" cellpadding="0" cellspacing="0" border="0">

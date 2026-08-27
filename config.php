@@ -15,6 +15,20 @@ define('TEMPLATES_PATH', BASE_PATH . '/templates');
 define('OUTPUT_PATH', BASE_PATH . '/output');
 define('UPLOADS_PATH', BASE_PATH . '/uploads/photos');
 define('PROCESSED_PHOTOS_PATH', BASE_PATH . '/uploads/photos_processed');
+define('MPDF_TEMP_PATH', BASE_PATH . '/tmp/mpdf');
+
+/**
+ * Convert a local Windows path into a URI that mPDF can reliably load from
+ * HTML/CSS. mPDF otherwise treats some absolute drive-letter paths as URLs.
+ */
+function mpdfAssetUri(string $path): string
+{
+    if (preg_match('#^[a-z][a-z0-9+.-]*://#i', $path)) {
+        return $path;
+    }
+
+    return 'file:///' . ltrim(str_replace('\\', '/', $path), '/');
+}
 
 // --- Card dimensions (CR80 standard, in mm) ---
 // Adjust these if the university's card stock differs.

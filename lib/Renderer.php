@@ -67,8 +67,16 @@ class Renderer
             throw new RuntimeException("No active students found for college id {$collegeId}");
         }
 
+        if (!is_dir(MPDF_TEMP_PATH) && !mkdir(MPDF_TEMP_PATH, 0775, true) && !is_dir(MPDF_TEMP_PATH)) {
+            throw new RuntimeException('Unable to create the mPDF temporary directory.');
+        }
+        if (!is_writable(MPDF_TEMP_PATH)) {
+            throw new RuntimeException('The mPDF temporary directory is not writable.');
+        }
+
         $mpdf = new Mpdf([
             'format'       => [CARD_WIDTH_MM, CARD_HEIGHT_MM],
+            'tempDir'      => MPDF_TEMP_PATH,
             'margin_left'  => 0,
             'margin_right' => 0,
             'margin_top'   => 0,

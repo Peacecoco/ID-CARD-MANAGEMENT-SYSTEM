@@ -39,19 +39,18 @@ if (empty($collegeOptions)) {
 }
 
 $selectedCollegeId = filter_input(INPUT_GET, 'college_id', FILTER_VALIDATE_INT) ?: 0;
-$studentsForCollege = [];
+$studentCount = 0;
 $studentLoadError = '';
 
 if ($selectedCollegeId > 0) {
     try {
         $stmt = $pdo->prepare(
-            'SELECT id, full_name, matric_no, photo_path
+            'SELECT COUNT(*)
              FROM students
-             WHERE college_id = :college_id AND status = "active"
-             ORDER BY full_name ASC'
+             WHERE college_id = :college_id AND status = "active"'
         );
         $stmt->execute([':college_id' => $selectedCollegeId]);
-        $studentsForCollege = $stmt->fetchAll();
+        $studentCount = (int) $stmt->fetchColumn();
     } catch (Throwable $exception) {
         $studentLoadError = 'Unable to load students for this college.';
     }
@@ -607,7 +606,6 @@ $menuGroups = [
 
         .preview-box {
             width: min(100%, 1200px);
-            min-height: 260px;
             background: rgba(240, 237, 240, 0.78);
             border: 1px solid rgba(126, 118, 127, 0.12);
             border-radius: 8px;
@@ -628,6 +626,21 @@ $menuGroups = [
             text-align: center;
             color: rgba(95, 87, 101, 0.76);
             width: 100%;
+        }
+
+        .pdf-preview-frame {
+            width: 100%;
+            height: min(74vh, 920px);
+            min-height: 520px;
+            border: 1px solid rgba(45, 45, 45, 0.42);
+            border-radius: 3px;
+            background: #3a3a3a;
+        }
+
+        .pdf-preview-note {
+            margin: 0;
+            font-size: 0.9rem;
+            color: rgba(98, 89, 103, 0.72);
         }
 
         .placeholder-icon {
@@ -860,50 +873,32 @@ $menuGroups = [
                     <div class="helper-row" id="helperRow">
                         <?php if ($studentLoadError !== ''): ?>
                             <span style="color: #d06a65;"><?php echo htmlspecialchars($studentLoadError); ?></span>
-                        <?php elseif ($selectedCollegeId > 0 && empty($studentsForCollege)): ?>
+                        <?php elseif ($selectedCollegeId > 0 && $studentCount === 0): ?>
                             No active students were found for this college.
                         <?php elseif ($selectedCollegeId > 0): ?>
-                            Students are loaded for the selected college.
+                            Previewing <?php echo $studentCount; ?> ID card<?php echo $studentCount === 1 ? '' : 's'; ?> for the selected college.
                         <?php else: ?>
                             Select a college to load students for that college.
                         <?php endif; ?>
                     </div>
 
-                    <?php if ($selectedCollegeId > 0 && !empty($studentsForCollege)): ?>
+                    <?php if ($selectedCollegeId > 0 && $studentCount > 0): ?>
                         <div class="action-row">
                             <a class="btn primary" href="generate_batch.php?college_id=<?php echo (int) $selectedCollegeId; ?>">Download PDF</a>
+                            <a class="btn secondary" href="generate_batch.php?college_id=<?php echo (int) $selectedCollegeId; ?>&amp;inline=1" target="_blank" rel="noopener">Open / Print PDF</a>
                         </div>
                     <?php endif; ?>
                 </form>
 
                 <div class="preview-box" aria-live="polite">
                     <div class="preview-inner" id="previewState">
-                        <?php if ($selectedCollegeId > 0 && !empty($studentsForCollege)): ?>
-                            <table class="results-table" aria-label="Students for the selected college">
-                                <thead>
-                                    <tr>
-                                        <th>Student Image</th>
-                                        <th>Student Name</th>
-                                        <th>Matric No</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php foreach ($studentsForCollege as $student): ?>
-                                        <tr>
-                                            <td>
-                                                <?php $studentImage = $student['photo_path'] ?? ''; ?>
-                                                <?php if (trim((string) $studentImage) !== ''): ?>
-                                                    <img class="student-photo" src="<?php echo htmlspecialchars($studentImage); ?>" alt="<?php echo htmlspecialchars($student['full_name'] ?? 'Student photo'); ?>" />
-                                                <?php else: ?>
-                                                    <div class="placeholder-icon" aria-hidden="true"></div>
-                                                <?php endif; ?>
-                                            </td>
-                                            <td><?php echo htmlspecialchars($student['full_name'] ?? 'N/A'); ?></td>
-                                            <td><?php echo htmlspecialchars($student['matric_no'] ?? 'N/A'); ?></td>
-                                        </tr>
-                                    <?php endforeach; ?>
-                                </tbody>
-                            </table>
+                        <?php if ($selectedCollegeId > 0 && $studentCount > 0): ?>
+                            <iframe
+                                class="pdf-preview-frame"
+                                title="ID card PDF preview"
+                                src="generate_batch.php?college_id=<?php echo (int) $selectedCollegeId; ?>&amp;inline=1"
+                            ></iframe>
+                            <p class="pdf-preview-note">Use the PDF viewer toolbar to scroll, print, or download this preview.</p>
                         <?php else: ?>
                             <div class="placeholder-icon" aria-hidden="true"></div>
                             <div class="preview-message">Select a college to load and preview students for that college.</div>

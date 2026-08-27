@@ -29,13 +29,13 @@
     <div class="line">Tel: 7900724</div>
     <div class="signature-area">
         <img
-            src="<?= htmlspecialchars(__DIR__ . '/../../assets/images/registrar_signature.png') ?>"
+            src="<?= htmlspecialchars(mpdfAssetUri(__DIR__ . '/../../assets/images/registrar_signature-mpdf.jpg')) ?>"
             class="registrar-signature"
             alt="Registrar's Signature"
         >
         <div class="signature-label">Registrar's Signature</div>
         <img
-            src="<?= htmlspecialchars(__DIR__ . '/../../assets/images/registrar_barcode.png') ?>"
+            src="<?= htmlspecialchars(mpdfAssetUri(__DIR__ . '/../../assets/images/registrar_barcode-mpdf.jpg')) ?>"
             class="registrar-barcode"
             alt="Barcode"
         >

@@ -15,7 +15,7 @@
         <tr>
             <td class="logo-cell">
                 <img
-                    src="<?= htmlspecialchars(__DIR__ . '/../../assets/images/university-logo.png') ?>"
+                    src="<?= htmlspecialchars(mpdfAssetUri(__DIR__ . '/../../assets/images/university-logo-mpdf.jpg')) ?>"
                     class="crest"
                     alt="University Logo"
                 >

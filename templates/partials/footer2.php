@@ -1,6 +1,6 @@
 <?php
-$footerImage = __DIR__ . '/../../assets/images/image.png';
-$collegeImagePath = __DIR__ . '/../../' . ltrim($college['logo_path'], '/');
+$footerImage = mpdfAssetUri(__DIR__ . '/../../assets/images/image.png');
+$collegeImagePath = mpdfAssetUri(__DIR__ . '/../../' . ltrim($college['logo_path'], '/'));
 ?>
 
 <div class="footer-wrapper" style="background-image: url('<?= htmlspecialchars($collegeImagePath) ?>');">
@@ -16,7 +16,7 @@ $collegeImagePath = __DIR__ . '/../../' . ltrim($college['logo_path'], '/');
 
             <td class="footer-photo-cell">
                 <img
-                    src="<?= htmlspecialchars($photoPath) ?>"
+                    src="<?= htmlspecialchars(mpdfAssetUri($photoPath)) ?>"
                     class="footer-student-photo"
                     alt="Student Photo">
             </td>
