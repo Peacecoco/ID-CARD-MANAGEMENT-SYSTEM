@@ -60,12 +60,17 @@ class Renderer
      */
     public function generateCollegeBatch(int $collegeId, ?string $generatedBy = null): array
     {
-        $college = $this->db->getCollege($collegeId);
-        $students = $this->db->getStudentsByCollege($collegeId);
+        return $this->generateStudentsBatch($this->db->getStudentsByCollege($collegeId), $generatedBy, $collegeId);
+    }
 
+    public function generateStudentsBatch(array $students, ?string $generatedBy = null, ?int $batchCollegeId = null): array
+    {
         if (empty($students)) {
-            throw new RuntimeException("No active students found for college id {$collegeId}");
+            throw new RuntimeException('No active students were selected.');
         }
+
+        $batchCollegeId = $batchCollegeId ?: (int) ($students[0]['college_id'] ?? 0);
+        $college = $this->db->getCollege($batchCollegeId);
 
         if (!is_dir(MPDF_TEMP_PATH) && !mkdir(MPDF_TEMP_PATH, 0775, true) && !is_dir(MPDF_TEMP_PATH)) {
             throw new RuntimeException('Unable to create the mPDF temporary directory.');
@@ -85,8 +90,8 @@ class Renderer
             'margin_footer'=> 0,
         ]);
 
-        $outputFile = OUTPUT_PATH . '/' . $college['code'] . '_' . date('Ymd_His') . '.pdf';
-        $batchId = $this->db->createBatch($collegeId, count($students), $outputFile, $generatedBy);
+        $outputFile = OUTPUT_PATH . '/' . ($batchCollegeId ? $college['code'] : 'SELECTIVE') . '_' . date('Ymd_His') . '.pdf';
+        $batchId = $this->db->createBatch($batchCollegeId, count($students), $outputFile, $generatedBy);
 
         $successCount = 0;
         $failures = [];
@@ -94,13 +99,14 @@ class Renderer
 
         foreach ($students as $student) {
             try {
+                $studentCollege = $this->db->getCollege((int) $student['college_id']);
                 $photoPath = $student['photo_processed_path'] ?: $student['photo_path'];
 
                 if (!file_exists($photoPath)) {
                     throw new RuntimeException("Photo missing for matric {$student['matric_no']}");
                 }
 
-                $frontHtml = $this->renderFront($student, $college, $photoPath);
+                $frontHtml = $this->renderFront($student, $studentCollege, $photoPath);
                 $backHtml = $this->renderBack($student);
 
                 if (!$isFirstPage) {
@@ -126,7 +132,7 @@ class Renderer
 
         if ($successCount === 0) {
             $this->db->failBatch($batchId);
-            throw new RuntimeException("Batch failed: no cards were generated for college id {$collegeId}");
+            throw new RuntimeException('Batch failed: no cards were generated.');
         }
 
         $mpdf->Output($outputFile, Destination::FILE);

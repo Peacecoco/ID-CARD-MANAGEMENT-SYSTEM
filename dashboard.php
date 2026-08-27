@@ -1,5 +1,21 @@
 <?php
 session_start();
+require __DIR__ . '/config.php';
+require __DIR__ . '/lib/Database.php';
+
+$section = filter_input(INPUT_GET, 'section', FILTER_UNSAFE_RAW) ?: '';
+$isSelectivePrinting = $section === 'selective-printing';
+$studentSearch = trim((string) (filter_input(INPUT_GET, 'student_search', FILTER_UNSAFE_RAW) ?: ''));
+$searchResults = [];
+$searchError = '';
+
+if ($isSelectivePrinting && $studentSearch !== '') {
+    try {
+        $searchResults = (new Database())->searchActiveStudents($studentSearch);
+    } catch (Throwable $exception) {
+        $searchError = 'Unable to search students right now.';
+    }
+}
 
 $currentUser = [
     'name' => 'Mr. Olatokun',
@@ -16,6 +32,7 @@ $menuGroups = [
                 ['label' => 'View permanent ID card', 'active' => false],
                 ['label' => 'Generate temporary ID card', 'active' => false],
             ]],
+            ['label' => 'Selective Printing', 'active' => $isSelectivePrinting, 'children' => [], 'href' => 'dashboard.php?section=selective-printing'],
         ],
     ],
     ['label' => 'Biometric Inner', 'expanded' => false, 'items' => []],
@@ -28,6 +45,7 @@ $menuGroups = [
 ?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -56,9 +74,12 @@ $menuGroups = [
             --brand: #2d2d2d;
         }
 
-        * { box-sizing: border-box; }
+        * {
+            box-sizing: border-box;
+        }
 
-        html, body {
+        html,
+        body {
             margin: 0;
             min-height: 100%;
             font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -70,7 +91,9 @@ $menuGroups = [
             min-height: 100vh;
         }
 
-        button, input, select {
+        button,
+        input,
+        select {
             font: inherit;
         }
 
@@ -105,7 +128,7 @@ $menuGroups = [
             border: 2px solid rgba(52, 52, 52, 0.85);
             background: linear-gradient(135deg, #f7f2f7, #dfe6e0);
             position: relative;
-            box-shadow: inset 0 0 0 2px rgba(255,255,255,0.6);
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.6);
         }
 
         .brand-mark::before,
@@ -118,7 +141,7 @@ $menuGroups = [
         .brand-mark::before {
             inset: 8px;
             border: 2px solid rgba(51, 53, 55, 0.8);
-            background: rgba(255,255,255,0.25);
+            background: rgba(255, 255, 255, 0.25);
         }
 
         .brand-mark::after {
@@ -174,7 +197,7 @@ $menuGroups = [
             font-size: 1.1rem;
             color: #2b2b2b;
             font-weight: 700;
-            box-shadow: inset 0 0 0 2px rgba(255,255,255,0.66);
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.66);
         }
 
         .profile-name {
@@ -235,10 +258,10 @@ $menuGroups = [
             background: rgba(200, 190, 203, 0.3);
         }
 
-        .nav-item.active > .nav-label {
-            background: linear-gradient(90deg, var(--sidebar-active), rgba(217,185,234,0.82));
+        .nav-item.active>.nav-label {
+            background: linear-gradient(90deg, var(--sidebar-active), rgba(217, 185, 234, 0.82));
             border-color: rgba(165, 116, 194, 0.18);
-            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.24);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24);
         }
 
         .caret {
@@ -256,7 +279,7 @@ $menuGroups = [
             border-left: 1px solid rgba(117, 110, 125, 0.2);
         }
 
-        .nav-item.open > .nav-submenu {
+        .nav-item.open>.nav-submenu {
             display: flex;
         }
 
@@ -298,13 +321,13 @@ $menuGroups = [
             border: 1px solid rgba(165, 138, 182, 0.1);
             border-radius: 20px;
             padding: 16px 20px 15px 20px;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
         }
 
         .search-icon {
             width: 18px;
             height: 18px;
-            border: 2px solid rgba(40,40,40,0.7);
+            border: 2px solid rgba(40, 40, 40, 0.7);
             border-radius: 50%;
             position: relative;
             opacity: 0.9;
@@ -316,7 +339,7 @@ $menuGroups = [
             position: absolute;
             width: 9px;
             height: 2px;
-            background: rgba(40,40,40,0.7);
+            background: rgba(40, 40, 40, 0.7);
             right: -5px;
             bottom: -1px;
             transform: rotate(45deg);
@@ -416,7 +439,7 @@ $menuGroups = [
 
         .generator-panel {
             width: min(100%, 1200px);
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(126, 118, 127, 0.15);
             border-radius: 10px;
             padding: 10px 0 0;
@@ -473,7 +496,7 @@ $menuGroups = [
         .input-shell input:focus,
         .input-shell select:focus {
             border-color: rgba(150, 117, 172, 0.42);
-            box-shadow: 0 0 0 4px rgba(214,188,229,0.18);
+            box-shadow: 0 0 0 4px rgba(214, 188, 229, 0.18);
             background: rgba(241, 236, 242, 0.76);
         }
 
@@ -492,15 +515,15 @@ $menuGroups = [
             padding: 12px 18px;
         }
 
-        .field-head + .input-shell input,
-        .field-head + .input-shell select {
+        .field-head+.input-shell input,
+        .field-head+.input-shell select {
             border-top-left-radius: 0;
             border-top-right-radius: 0;
             border-top: 0;
         }
 
-        .field-head + .input-shell input,
-        .field-head + .input-shell select {
+        .field-head+.input-shell input,
+        .field-head+.input-shell select {
             background: rgba(225, 221, 227, 0.58);
         }
 
@@ -523,7 +546,7 @@ $menuGroups = [
             appearance: none;
             border: 1px solid rgba(96, 87, 100, 0.4);
             border-radius: 6px;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255, 255, 255, 0.1);
             color: var(--text);
             font-size: 1.05rem;
             font-weight: 600;
@@ -579,7 +602,7 @@ $menuGroups = [
             border: 2px solid rgba(100, 97, 103, 0.55);
             border-radius: 10px;
             position: relative;
-            background: rgba(255,255,255,0.14);
+            background: rgba(255, 255, 255, 0.14);
         }
 
         .placeholder-icon::before {
@@ -588,7 +611,7 @@ $menuGroups = [
             inset: 15px 12px 12px 12px;
             border: 2px solid rgba(100, 97, 103, 0.75);
             border-radius: 7px;
-            background: rgba(255,255,255,0.12);
+            background: rgba(255, 255, 255, 0.12);
         }
 
         .placeholder-icon::after {
@@ -598,7 +621,7 @@ $menuGroups = [
             height: 18px;
             border: 2px solid rgba(100, 97, 103, 0.75);
             border-radius: 50%;
-            background: rgba(255,255,255,0.12);
+            background: rgba(255, 255, 255, 0.12);
             right: 11px;
             top: 9px;
         }
@@ -620,6 +643,124 @@ $menuGroups = [
             color: var(--danger);
         }
 
+        .selective-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 270px;
+            gap: 22px;
+            align-items: start;
+        }
+
+        .selective-search {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .selective-search input {
+            flex: 1;
+            height: 42px;
+            padding: 0 14px;
+            border: 1px solid var(--field-line);
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.72);
+            color: var(--text);
+            outline: none;
+        }
+
+        .selective-search .btn {
+            min-width: 104px;
+            height: 42px;
+        }
+
+        .selected-panel {
+            border: 1px solid var(--field-line);
+            border-radius: 8px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.45);
+        }
+
+        .selected-heading {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--field-line);
+            font-size: 0.84rem;
+            font-weight: 700;
+            color: var(--heading);
+        }
+
+        .student-result {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--field-line);
+        }
+
+        .student-result:last-child {
+            border-bottom: 0;
+        }
+
+        .student-avatar {
+            width: 34px;
+            height: 34px;
+            flex: 0 0 34px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            background: var(--primary-soft);
+            color: var(--heading);
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .student-result strong {
+            display: block;
+            font-size: 0.76rem;
+            color: var(--heading);
+        }
+
+        .student-result small {
+            display: block;
+            margin-top: 3px;
+            color: var(--muted);
+            font-size: 0.65rem;
+        }
+
+        .student-remove {
+            margin-left: auto;
+            border: 1px solid rgba(208, 106, 101, 0.45);
+            border-radius: 3px;
+            background: transparent;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 0.72rem;
+            line-height: 1;
+            padding: 2px 5px;
+        }
+
+        .selection-actions {
+            padding: 10px 12px;
+            border-top: 1px solid var(--field-line);
+        }
+
+        .selection-actions .btn {
+            width: 100%;
+            min-width: 0;
+            height: 38px;
+        }
+
+        .empty-results {
+            padding: 20px 14px;
+            color: var(--muted);
+            font-size: 0.76rem;
+            text-align: center;
+        }
+
+        @media (max-width: 800px) {
+            .selective-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
         @media (max-width: 980px) {
             .app-shell {
                 flex-direction: column;
@@ -638,6 +779,7 @@ $menuGroups = [
             .topbar {
                 flex-wrap: wrap;
             }
+
         }
 
         @media (max-width: 720px) {
@@ -665,6 +807,7 @@ $menuGroups = [
         }
     </style>
 </head>
+
 <body>
     <div class="app-shell">
         <aside class="sidebar" aria-label="Sidebar navigation">
@@ -698,7 +841,7 @@ $menuGroups = [
                         <?php if (!empty($group['items'])): ?>
                             <div class="nav-submenu">
                                 <?php foreach ($group['items'] as $item): ?>
-                                    <a class="nav-subitem <?php echo !empty($item['active']) ? 'active' : ''; ?>" href="#"><?php echo htmlspecialchars($item['label']); ?></a>
+                                    <a class="nav-subitem <?php echo !empty($item['active']) ? 'active' : ''; ?>" href="<?php echo htmlspecialchars($item['href'] ?? '#'); ?>"><?php echo htmlspecialchars($item['label']); ?></a>
                                     <?php if (!empty($item['children'])): ?>
                                         <?php foreach ($item['children'] as $child): ?>
                                             <a class="nav-subitem <?php echo !empty($child['active']) ? 'active' : ''; ?>" href="#"><?php echo htmlspecialchars($child['label']); ?></a>
@@ -728,69 +871,140 @@ $menuGroups = [
                 </div>
             </header>
 
-            <section class="page" aria-labelledby="page-title">
-                <div class="crumbs" aria-label="Breadcrumb">
-                    <span>Home</span>
-                    <span class="sep">›</span>
-                    <span>Biometric</span>
-                    <span class="sep">›</span>
-                    <span>Temporary ID Card Generator</span>
-                </div>
-
-                <h1 id="page-title">Permanent ID Card Generator</h1>
-                <p class="subtitle">Filter and generate a student's temporary ID card</p>
-
-                <form id="idCardForm" class="generator-panel" method="post" novalidate>
-                    <div class="form-grid">
-                        <div class="field full">
-                            <div class="field-head">College and level</div>
-                            <div class="input-shell">
-                                <select name="college_level" id="college_level" required>
-                                    <option value="">Select college and level</option>
-                                    <option value="College of Engineering">College of Engineering</option>
-                                    <option value="College of Science and Technology">College of Science and Technology</option>
-                                    <option value="College of Management and Social Sciences">College of Management and Social Sciences</option>
-                                    <option value="College of Leadership and Development Studies">College of Leadership and Development Studies</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="field">
-                            <label class="field-label" for="first_name">First Name</label>
-                            <div class="input-shell">
-                                <input type="text" id="first_name" name="first_name" placeholder="Type first name..." />
-                            </div>
-                        </div>
-
-                        <div class="field">
-                            <label class="field-label" for="last_name">Last Name</label>
-                            <div class="input-shell">
-                                <input type="text" id="last_name" name="last_name" placeholder="Type last name..." />
-                            </div>
-                        </div>
+            <?php if ($isSelectivePrinting): ?>
+                <section class="page" id="selective-printing" aria-labelledby="page-title">
+                    <div class="crumbs" aria-label="Breadcrumb">
+                        <span>Home</span>
+                        <span class="sep">›</span>
+                        <span>Biometric</span>
+                        <span class="sep">›</span>
+                        <span>Selective Printing</span>
                     </div>
 
-                    <div class="helper-row" id="helperRow">Fill both fields to enable card generation</div>
-                    <div class="status-message" id="statusMessage" aria-live="polite"></div>
+                    <h1 id="page-title">Selective Printing</h1>
+                    <p class="subtitle">Search by student name or matric number</p>
 
-                    <div class="action-row">
-                        <button type="submit" class="btn primary" id="generateBtn">Generate Cards</button>
-                        <button type="reset" class="btn secondary" id="resetBtn">Reset</button>
-                    </div>
-                </form>
+                    <div class="selective-layout">
+                        <form class="generator-panel" method="get">
+                            <input type="hidden" name="section" value="selective-printing">
+                            <div class="selective-search">
+                                <input type="search" name="student_search" value="<?php echo htmlspecialchars($studentSearch); ?>" placeholder="Enter name or matric number" aria-label="Search by student name or matric number" autofocus>
+                                <button type="submit" class="btn primary">Search</button>
+                            </div>
+                            <?php if ($searchError !== ''): ?>
+                                <div class="status-message error"><?php echo htmlspecialchars($searchError); ?></div>
+                            <?php endif; ?>
+                        </form>
 
-                <div class="preview-box" aria-live="polite">
-                    <div class="preview-inner" id="previewState">
-                        <div class="placeholder-icon" aria-hidden="true"></div>
-                        <div class="preview-message">Select college and level to preview ID cards</div>
+                        <form class="selected-panel" id="selectionForm" method="post" action="generate_batch.php" aria-label="Selected students">
+                            <div class="selected-heading">Selected Students (<?php echo count($searchResults); ?>)</div>
+                            <?php if (empty($searchResults)): ?>
+                                <div class="empty-results"><?php echo $studentSearch === '' ? 'Search for a student to load results.' : 'No active students matched your search.'; ?></div>
+                            <?php else: ?>
+                                <?php foreach ($searchResults as $student): ?>
+                                    <div class="student-result" data-student-row>
+                                        <input type="hidden" name="student_ids[]" value="<?php echo (int) $student['id']; ?>">
+                                        <div class="student-avatar"><?php echo htmlspecialchars(strtoupper(substr($student['full_name'], 0, 1))); ?></div>
+                                        <div>
+                                            <strong><?php echo htmlspecialchars($student['full_name']); ?></strong>
+                                            <small><?php echo htmlspecialchars($student['matric_no']); ?></small>
+                                        </div>
+                                        <button type="button" class="student-remove" aria-label="Remove <?php echo htmlspecialchars($student['full_name']); ?>">x</button>
+                                    </div>
+                                <?php endforeach; ?>
+                                <div class="selection-actions">
+                                    <button type="submit" class="btn primary" formaction="generate_batch.php" formmethod="post">Generate Cards</button>
+                                </div>
+                            <?php endif; ?>
+                        </form>
                     </div>
-                </div>
+                </section>
+            <?php else: ?>
+                <section class="page" aria-labelledby="page-title">
+                    <div class="crumbs" aria-label="Breadcrumb">
+                        <span>Home</span>
+                        <span class="sep">›</span>
+                        <span>Biometric</span>
+                        <span class="sep">›</span>
+                        <span>Temporary ID Card Generator</span>
+                    </div>
+
+                    <h1 id="page-title">Permanent ID Card Generator</h1>
+                    <p class="subtitle">Filter and generate a student's temporary ID card</p>
+
+                    <form id="idCardForm" class="generator-panel" method="post" novalidate>
+                        <div class="form-grid">
+                            <div class="field full">
+                                <div class="field-head">College and level</div>
+                                <div class="input-shell">
+                                    <select name="college_level" id="college_level" required>
+                                        <option value="">Select college and level</option>
+                                        <option value="College of Engineering">College of Engineering</option>
+                                        <option value="College of Science and Technology">College of Science and Technology</option>
+                                        <option value="College of Management and Social Sciences">College of Management and Social Sciences</option>
+                                        <option value="College of Leadership and Development Studies">College of Leadership and Development Studies</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="field">
+                                <label class="field-label" for="first_name">First Name</label>
+                                <div class="input-shell"><input type="text" id="first_name" name="first_name" placeholder="Type first name..." /></div>
+                            </div>
+                            <div class="field">
+                                <label class="field-label" for="last_name">Last Name</label>
+                                <div class="input-shell"><input type="text" id="last_name" name="last_name" placeholder="Type last name..." /></div>
+                            </div>
+                        </div>
+                        <div class="helper-row" id="helperRow">Fill both fields to enable card generation</div>
+                        <div class="status-message" id="statusMessage" aria-live="polite"></div>
+                        <div class="action-row">
+                            <button type="submit" class="btn primary" id="generateBtn">Generate Cards</button>
+                            <button type="reset" class="btn secondary" id="resetBtn">Reset</button>
+                        </div>
+                    </form>
+                    <div class="preview-box" aria-live="polite">
+                        <div class="preview-inner" id="previewState">
+                            <div class="placeholder-icon" aria-hidden="true"></div>
+                            <div class="preview-message">Select college and level to preview ID cards</div>
+                        </div>
+                    </div>
+                </section>
+            <?php endif; ?>
             </section>
         </main>
     </div>
 
     <script>
         (function () {
+            const selectionForm = document.getElementById('selectionForm');
+            if (!selectionForm) {
+                return;
+            }
+
+            selectionForm.addEventListener('click', function (event) {
+                const removeButton = event.target.closest('.student-remove');
+                if (!removeButton) {
+                    return;
+                }
+
+                const row = removeButton.closest('[data-student-row]');
+                if (row) {
+                    row.remove();
+                }
+
+                const heading = selectionForm.querySelector('.selected-heading');
+                const count = selectionForm.querySelectorAll('[data-student-row]').length;
+                heading.textContent = 'Selected Students (' + count + ')';
+                const generateButton = selectionForm.querySelector('[type="submit"]');
+                if (generateButton) {
+                    generateButton.disabled = count === 0;
+                }
+            });
+        })();
+    </script>
+
+    <script>
+        (function() {
             const form = document.getElementById('idCardForm');
             const collegeSelect = document.getElementById('college_level');
             const firstName = document.getElementById('first_name');
@@ -799,6 +1013,10 @@ $menuGroups = [
             const helperRow = document.getElementById('helperRow');
             const previewState = document.getElementById('previewState');
             const generateBtn = document.getElementById('generateBtn');
+
+            if (!form) {
+                return;
+            }
 
             function updateGenerationReadyState() {
                 const eligible = firstName.value.trim() && lastName.value.trim() && collegeSelect.value.trim();
@@ -815,13 +1033,13 @@ $menuGroups = [
                 }
             }
 
-            [collegeSelect, firstName, lastName].forEach(function (element) {
+            [collegeSelect, firstName, lastName].forEach(function(element) {
                 element.addEventListener('input', updateGenerationReadyState);
                 element.addEventListener('change', updateGenerationReadyState);
             });
 
-            form.addEventListener('reset', function () {
-                window.setTimeout(function () {
+            form.addEventListener('reset', function() {
+                window.setTimeout(function() {
                     statusMessage.textContent = '';
                     statusMessage.classList.remove('error');
                     previewState.innerHTML = '<div class="placeholder-icon" aria-hidden="true"></div><div class="preview-message">Select college and level to preview ID cards</div>';
@@ -833,7 +1051,7 @@ $menuGroups = [
                 }, 0);
             });
 
-            form.addEventListener('submit', function (event) {
+            form.addEventListener('submit', function(event) {
                 event.preventDefault();
 
                 const college = collegeSelect.value.trim();
@@ -883,4 +1101,5 @@ $menuGroups = [
         })();
     </script>
 </body>
+
 </html>

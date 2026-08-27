@@ -19,9 +19,12 @@ $isCli = PHP_SAPI === 'cli';
 $collegeId = $isCli
     ? (isset($argv[1]) ? (int) $argv[1] : null)
     : (isset($_GET['college_id']) ? (int) $_GET['college_id'] : null);
+$studentIds = !$isCli && isset($_POST['student_ids']) && is_array($_POST['student_ids'])
+    ? $_POST['student_ids']
+    : [];
 $inline = !$isCli && isset($_GET['inline']) && $_GET['inline'] === '1';
 
-if (!$collegeId) {
+    if (!$collegeId && empty($studentIds)) {
     $message = $isCli
         ? "Usage: php generate_batch.php <college_id>\n"
         : 'Missing or invalid college_id.';
@@ -38,8 +41,13 @@ if (!$collegeId) {
 try {
     $db = new Database();
 
-    // Step 1: pre-process photos for this college (skips already-processed ones)
-    $students = $db->getStudentsByCollege($collegeId);
+    // Step 1: pre-process photos (skips already-processed ones)
+    $students = empty($studentIds)
+        ? $db->getStudentsByCollege($collegeId)
+        : $db->getActiveStudentsByIds($studentIds);
+    if (empty($students)) {
+        throw new RuntimeException('No active students were selected.');
+    }
     [$processedCount, $photoFailures] = PhotoProcessor::processCollegeBatch($db, $students);
 
     if ($isCli) {
@@ -54,7 +62,9 @@ try {
 
     // Step 2: render the batch PDF
     $renderer = new Renderer($db);
-    $result = $renderer->generateCollegeBatch($collegeId, generatedBy: $isCli ? 'cli' : 'web');
+    $result = empty($studentIds)
+        ? $renderer->generateCollegeBatch($collegeId, generatedBy: $isCli ? 'cli' : 'web')
+        : $renderer->generateStudentsBatch($students, generatedBy: 'web');
 
     if ($isCli) {
         echo "\nBatch complete.\n";

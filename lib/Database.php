@@ -44,6 +44,35 @@ class Database
         return $stmt->fetchAll();
     }
 
+    public function searchActiveStudents(string $searchTerm): array
+    {
+        $term = '%' . $searchTerm . '%';
+        $stmt = $this->pdo->prepare(
+            'SELECT * FROM students
+             WHERE status = "active"
+             AND (full_name LIKE ? OR matric_no LIKE ?)
+             ORDER BY full_name
+             LIMIT 50'
+        );
+        $stmt->execute([$term, $term]);
+        return $stmt->fetchAll();
+    }
+
+    public function getActiveStudentsByIds(array $studentIds): array
+    {
+        $studentIds = array_values(array_unique(array_filter(array_map('intval', $studentIds), static fn (int $id): bool => $id > 0)));
+        if (empty($studentIds)) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($studentIds), '?'));
+        $stmt = $this->pdo->prepare(
+            "SELECT * FROM students WHERE status = 'active' AND id IN ({$placeholders}) ORDER BY full_name"
+        );
+        $stmt->execute($studentIds);
+        return $stmt->fetchAll();
+    }
+
     public function updateStudentProcessedPhoto(int $studentId, string $processedPath): void
     {
         $stmt = $this->pdo->prepare('UPDATE students SET photo_processed_path = ? WHERE id = ?');
