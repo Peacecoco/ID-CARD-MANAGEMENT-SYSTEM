@@ -24,6 +24,7 @@ $studentIds = !$isCli && isset($_POST['student_ids']) && is_array($_POST['studen
     : [];
 $preview = !$isCli && isset($_POST['preview']) && $_POST['preview'] === '1';
 $inline = !$isCli && isset($_GET['inline']) && $_GET['inline'] === '1';
+$temporary = !$isCli && isset($_GET['temporary']) && $_GET['temporary'] === '1';
 
 if (!$collegeId && empty($studentIds)) {
     $message = $isCli
@@ -64,7 +65,7 @@ try {
     // Step 2: render the batch PDF
     $renderer = new Renderer($db);
     $result = empty($studentIds)
-        ? $renderer->generateCollegeBatch($collegeId, generatedBy: $isCli ? 'cli' : 'web')
+        ? $renderer->generateCollegeBatch($collegeId, generatedBy: $isCli ? 'cli' : 'web', temporary: $temporary)
         : $renderer->generateStudentsBatch($students, generatedBy: 'web');
 
     if ($isCli) {

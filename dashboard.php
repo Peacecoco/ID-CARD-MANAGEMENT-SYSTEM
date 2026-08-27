@@ -5,11 +5,40 @@ require __DIR__ . '/lib/Database.php';
 
 $section = filter_input(INPUT_GET, 'section', FILTER_UNSAFE_RAW) ?: '';
 $isSelectivePrinting = $section === 'selective-printing';
+$isPermanentId = $section === 'permanent-id' || $section === '';
+$isTemporaryId = $section === 'temporary-id';
 $studentSearch = trim((string) (filter_input(INPUT_GET, 'student_search', FILTER_UNSAFE_RAW) ?: ''));
 $selectedIds = isset($_GET['selected_ids']) && is_array($_GET['selected_ids']) ? $_GET['selected_ids'] : [];
 $searchResults = [];
 $selectedStudents = [];
 $searchError = '';
+$collegeOptions = [
+    1 => 'Engineering',
+    2 => 'Management Sciences',
+    3 => 'Science',
+    4 => 'Leadership',
+];
+$selectedCollegeId = filter_input(INPUT_GET, 'college_id', FILTER_VALIDATE_INT) ?: 0;
+$studentCount = 0;
+$studentLoadError = '';
+
+if ($isPermanentId || $isTemporaryId) {
+    try {
+        $database = new Database();
+        $collegeRows = $database->getAllColleges();
+        foreach ($collegeRows as $college) {
+            $collegeId = (int) ($college['id'] ?? 0);
+            if (isset($collegeOptions[$collegeId])) {
+                $collegeOptions[$collegeId] = $college['name'] ?? $collegeOptions[$collegeId];
+            }
+        }
+        if ($selectedCollegeId > 0) {
+            $studentCount = count($database->getStudentsByCollege($selectedCollegeId));
+        }
+    } catch (Throwable $exception) {
+        $studentLoadError = 'Unable to load college or student data.';
+    }
+}
 
 if ($isSelectivePrinting) {
     try {
@@ -38,11 +67,8 @@ $menuGroups = [
         'label' => 'Biometric',
         'expanded' => true,
         'items' => [
-            ['label' => 'Temporary ID card', 'active' => false, 'children' => []],
-            ['label' => 'Permanent ID card', 'active' => true, 'children' => [
-                ['label' => 'View permanent ID card', 'active' => false],
-                ['label' => 'Generate temporary ID card', 'active' => false],
-            ]],
+            ['label' => 'Temporary ID card', 'active' => $isTemporaryId, 'children' => [], 'href' => 'dashboard.php?section=temporary-id'],
+            ['label' => 'Permanent ID card', 'active' => $isPermanentId, 'children' => [], 'href' => 'dashboard.php?section=permanent-id'],
             ['label' => 'Selective Printing', 'active' => $isSelectivePrinting, 'children' => [], 'href' => 'dashboard.php?section=selective-printing'],
         ],
     ],
@@ -605,6 +631,7 @@ $menuGroups = [
             gap: 12px;
             text-align: center;
             color: rgba(95, 87, 101, 0.76);
+            width: 100%;
         }
 
         .placeholder-icon {
@@ -642,6 +669,21 @@ $menuGroups = [
             color: rgba(98, 89, 103, 0.68);
         }
 
+        .pdf-preview-frame {
+            width: 100%;
+            height: min(74vh, 920px);
+            min-height: 520px;
+            border: 1px solid rgba(45, 45, 45, 0.42);
+            border-radius: 3px;
+            background: #3a3a3a;
+        }
+
+        .pdf-preview-note {
+            margin: 0;
+            font-size: 0.9rem;
+            color: rgba(98, 89, 103, 0.72);
+        }
+
         .selective-preview-frame {
             width: 100%;
             height: min(74vh, 920px);
@@ -661,6 +703,12 @@ $menuGroups = [
             font-size: 0.8rem;
             font-weight: 600;
             text-decoration: none;
+        }
+
+        .preview-open {
+            margin-left: 8px;
+            color: var(--muted-strong);
+            font-size: 0.8rem;
         }
 
         .status-message {
@@ -975,58 +1023,67 @@ $menuGroups = [
                         </div>
                     </div>
                 </section>
-            <?php else: ?>
+            <?php elseif ($isPermanentId || $isTemporaryId): ?>
                 <section class="page" aria-labelledby="page-title">
                     <div class="crumbs" aria-label="Breadcrumb">
                         <span>Home</span>
                         <span class="sep">›</span>
                         <span>Biometric</span>
                         <span class="sep">›</span>
-                        <span>Temporary ID Card Generator</span>
+                        <span><?php echo $isTemporaryId ? 'Temporary ID Card Generator' : 'Permanent ID Card Generator'; ?></span>
                     </div>
 
-                    <h1 id="page-title">Permanent ID Card Generator</h1>
-                    <p class="subtitle">Filter and generate a student's temporary ID card</p>
+                    <h1 id="page-title"><?php echo $isTemporaryId ? 'Temporary ID Card Generator' : 'Permanent ID Card Generator'; ?></h1>
+                    <p class="subtitle">Filter and generate a student's <?php echo $isTemporaryId ? 'temporary' : 'permanent'; ?> ID card</p>
 
-                    <form id="idCardForm" class="generator-panel" method="post" novalidate>
+                    <form id="collegeForm" class="generator-panel" method="get" action="dashboard.php">
+                        <input type="hidden" name="section" value="<?php echo $isTemporaryId ? 'temporary-id' : 'permanent-id'; ?>">
                         <div class="form-grid">
                             <div class="field full">
                                 <div class="field-head">College and level</div>
                                 <div class="input-shell">
-                                    <select name="college_level" id="college_level" required>
-                                        <option value="">Select college and level</option>
-                                        <option value="College of Engineering">College of Engineering</option>
-                                        <option value="College of Science and Technology">College of Science and Technology</option>
-                                        <option value="College of Management and Social Sciences">College of Management and Social Sciences</option>
-                                        <option value="College of Leadership and Development Studies">College of Leadership and Development Studies</option>
+                                    <select name="college_id" id="college_id" required onchange="this.form.submit()">
+                                        <option value="">Select college</option>
+                                        <?php foreach ($collegeOptions as $collegeId => $collegeName): ?>
+                                            <option value="<?php echo (int) $collegeId; ?>" <?php echo $selectedCollegeId === (int) $collegeId ? 'selected' : ''; ?>>
+                                                <?php echo htmlspecialchars($collegeName); ?>
+                                            </option>
+                                        <?php endforeach; ?>
                                     </select>
                                 </div>
                             </div>
-                            <div class="field">
-                                <label class="field-label" for="first_name">First Name</label>
-                                <div class="input-shell"><input type="text" id="first_name" name="first_name" placeholder="Type first name..." /></div>
-                            </div>
-                            <div class="field">
-                                <label class="field-label" for="last_name">Last Name</label>
-                                <div class="input-shell"><input type="text" id="last_name" name="last_name" placeholder="Type last name..." /></div>
-                            </div>
                         </div>
-                        <div class="helper-row" id="helperRow">Fill both fields to enable card generation</div>
-                        <div class="status-message" id="statusMessage" aria-live="polite"></div>
-                        <div class="action-row">
-                            <button type="submit" class="btn primary" id="generateBtn">Generate Cards</button>
-                            <button type="reset" class="btn secondary" id="resetBtn">Reset</button>
+                        <div class="helper-row">
+                            <?php if ($studentLoadError !== ''): ?>
+                                <span class="status-message error"><?php echo htmlspecialchars($studentLoadError); ?></span>
+                            <?php elseif ($selectedCollegeId > 0 && $studentCount === 0): ?>
+                                No active students were found for this college.
+                            <?php elseif ($selectedCollegeId > 0): ?>
+                                Previewing <?php echo $studentCount; ?> ID card<?php echo $studentCount === 1 ? '' : 's'; ?> for the selected college.
+                            <?php else: ?>
+                                Select a college to load students for that college.
+                            <?php endif; ?>
                         </div>
+                        <?php if ($selectedCollegeId > 0 && $studentCount > 0): ?>
+                            <div class="action-row">
+                                <a class="btn primary" href="generate_batch.php?college_id=<?php echo (int) $selectedCollegeId; ?><?php echo $isTemporaryId ? '&amp;temporary=1' : ''; ?>">Download PDF</a>
+                                <a class="btn secondary" href="generate_batch.php?college_id=<?php echo (int) $selectedCollegeId; ?>&amp;inline=1<?php echo $isTemporaryId ? '&amp;temporary=1' : ''; ?>" target="_blank" rel="noopener">Open / Print PDF</a>
+                            </div>
+                        <?php endif; ?>
                     </form>
                     <div class="preview-box" aria-live="polite">
                         <div class="preview-inner" id="previewState">
-                            <div class="placeholder-icon" aria-hidden="true"></div>
-                            <div class="preview-message">Select college and level to preview ID cards</div>
+                            <?php if ($selectedCollegeId > 0 && $studentCount > 0): ?>
+                                <iframe class="pdf-preview-frame" title="ID card PDF preview" src="generate_batch.php?college_id=<?php echo (int) $selectedCollegeId; ?>&amp;inline=1<?php echo $isTemporaryId ? '&amp;temporary=1' : ''; ?>"></iframe>
+                                <p class="pdf-preview-note">Use the PDF viewer toolbar to scroll, print, or download this preview.</p>
+                            <?php else: ?>
+                                <div class="placeholder-icon" aria-hidden="true"></div>
+                                <div class="preview-message">Select a college to load and preview students for that college.</div>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </section>
             <?php endif; ?>
-            </section>
         </main>
     </div>
 
@@ -1100,8 +1157,10 @@ $menuGroups = [
                         return response.json();
                     })
                     .then(function(data) {
-                        previewState.innerHTML = '<iframe class="selective-preview-frame" title="Selected ID card PDF preview" src="' + data.pdf_url + '"></iframe>' +
-                            '<a class="preview-download" href="' + data.pdf_url + '" download="' + data.download_name + '">Download PDF</a>';
+                        const viewerUrl = data.pdf_url + '#toolbar=1&navpanes=0&scrollbar=1';
+                        previewState.innerHTML = '<iframe class="selective-preview-frame" title="Selected ID card PDF preview" src="' + viewerUrl + '"></iframe>' +
+                            '<a class="preview-download" href="' + data.pdf_url + '" download="' + data.download_name + '">Download PDF</a>' +
+                            '<a class="preview-open" href="' + viewerUrl + '" target="_blank" rel="noopener">Open full viewer</a>';
                     })
                     .catch(function(error) {
                         previewState.innerHTML = '<div class="preview-message">' + error.message + '</div>';

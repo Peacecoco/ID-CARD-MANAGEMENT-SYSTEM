@@ -17,8 +17,11 @@ $collegeImagePath = mpdfAssetUri(__DIR__ . '/../../' . ltrim($college['logo_path
             <td class="footer-photo-cell">
                 <img
                     src="<?= htmlspecialchars(mpdfAssetUri($photoPath)) ?>"
-                    class="footer-student-photo"
+                    class="footer-student-photo <?= !empty($isTemporary) ? 'temporary-photo' : '' ?>"
                     alt="Student Photo">
+                <?php if (!empty($isTemporary)): ?>
+                    <div class="temporary-id-label">TEMPORARY ID</div>
+                <?php endif; ?>
             </td>
 
             <td class="footer-student-label">
@@ -97,5 +100,21 @@ $collegeImagePath = mpdfAssetUri(__DIR__ . '/../../' . ltrim($college['logo_path
     object-fit: cover;
     margin: 7.5% auto;
     padding: 0;
+}
+
+.temporary-photo {
+    height: 72%;
+    margin: 3% auto 0;
+}
+
+.temporary-id-label {
+    height: 20%;
+    margin-top: 2%;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    font-size: 7pt;
+    line-height: 1;
+    font-weight: bold;
+    color: #000000;
 }
 </style>

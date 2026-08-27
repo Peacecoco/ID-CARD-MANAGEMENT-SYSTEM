@@ -20,8 +20,10 @@ $buildingImage = mpdfAssetUri(__DIR__ . '/../../assets/images/cu_building.jpg');
                     <tr><td class="item" height="5mm"><?= htmlspecialchars($college['code']) ?></td></tr>
                     <tr><td class="space" height="1mm">&nbsp;</td></tr>
                     <tr><td class="item" height="5mm"><?= htmlspecialchars($student['department']) ?></td></tr>
-                    <tr><td class="space" height="1mm">&nbsp;</td></tr>
-                    <tr><td class="item" height="5mm"><?= htmlspecialchars($student['matric_no']) ?></td></tr>
+                    <?php if (empty($isTemporary)): ?>
+                        <tr><td class="space" height="1mm">&nbsp;</td></tr>
+                        <tr><td class="item" height="5mm"><?= htmlspecialchars($student['matric_no']) ?></td></tr>
+                    <?php endif; ?>
                 </table>
             </td>
         </tr>

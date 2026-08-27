@@ -22,7 +22,7 @@ class Renderer
      * Render the front-of-card HTML for one student.
      * $photoPath must already be the PROCESSED photo path.
      */
-    private function renderFront(array $student, array $college, string $photoPath): string
+    private function renderFront(array $student, array $college, string $photoPath, bool $isTemporary = false): string
     {
         // Layout is shared across all colleges, only primary_color differs.
         // If a specific college ever needs a genuinely different layout,
@@ -58,12 +58,12 @@ class Renderer
      * Verify this ordering against the Magicard 300 driver's
      * expected page sequence before running a full production batch.
      */
-    public function generateCollegeBatch(int $collegeId, ?string $generatedBy = null): array
+    public function generateCollegeBatch(int $collegeId, ?string $generatedBy = null, bool $temporary = false): array
     {
-        return $this->generateStudentsBatch($this->db->getStudentsByCollege($collegeId), $generatedBy, $collegeId);
+        return $this->generateStudentsBatch($this->db->getStudentsByCollege($collegeId), $generatedBy, $collegeId, $temporary);
     }
 
-    public function generateStudentsBatch(array $students, ?string $generatedBy = null, ?int $batchCollegeId = null): array
+    public function generateStudentsBatch(array $students, ?string $generatedBy = null, ?int $batchCollegeId = null, bool $temporary = false): array
     {
         if (empty($students)) {
             throw new RuntimeException('No active students were selected.');
@@ -106,7 +106,7 @@ class Renderer
                     throw new RuntimeException("Photo missing for matric {$student['matric_no']}");
                 }
 
-                $frontHtml = $this->renderFront($student, $studentCollege, $photoPath);
+                $frontHtml = $this->renderFront($student, $studentCollege, $photoPath, $temporary);
                 $backHtml = $this->renderBack($student);
 
                 if (!$isFirstPage) {
