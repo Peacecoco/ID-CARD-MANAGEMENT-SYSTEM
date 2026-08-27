@@ -107,13 +107,9 @@ $collegeImagePath = mpdfAssetUri(__DIR__ . '/../../' . ltrim($college['logo_path
     margin: 3% auto 0;
 }
 
-.temporary-footer-label {
-    transform: translateY(3%);
-}
-
 .temporary-id-label {
-    height: 22%;
-    margin: 2% auto 3%;
+    height: 26%;
+    margin: 0 auto 5%;
     padding-top: 5%;
     box-sizing: border-box;
     text-align: center;
@@ -123,6 +119,6 @@ $collegeImagePath = mpdfAssetUri(__DIR__ . '/../../' . ltrim($college['logo_path
     font-weight: bold;
     color: #000000;
     white-space: nowrap;
-    transform: translateY(35%) scaleX(0.7);
+    transform: scaleX(0.7);
 }
 </style>
