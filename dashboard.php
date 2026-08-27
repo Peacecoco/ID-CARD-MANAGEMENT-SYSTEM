@@ -6,12 +6,23 @@ require __DIR__ . '/lib/Database.php';
 $section = filter_input(INPUT_GET, 'section', FILTER_UNSAFE_RAW) ?: '';
 $isSelectivePrinting = $section === 'selective-printing';
 $studentSearch = trim((string) (filter_input(INPUT_GET, 'student_search', FILTER_UNSAFE_RAW) ?: ''));
+$selectedIds = isset($_GET['selected_ids']) && is_array($_GET['selected_ids']) ? $_GET['selected_ids'] : [];
 $searchResults = [];
+$selectedStudents = [];
 $searchError = '';
 
-if ($isSelectivePrinting && $studentSearch !== '') {
+if ($isSelectivePrinting) {
     try {
-        $searchResults = (new Database())->searchActiveStudents($studentSearch);
+        $database = new Database();
+        $selectedStudents = $database->getActiveStudentsByIds($selectedIds);
+        if ($studentSearch !== '') {
+            $searchResults = $database->searchActiveStudents($studentSearch);
+            $studentsById = [];
+            foreach (array_merge($selectedStudents, $searchResults) as $student) {
+                $studentsById[(int) $student['id']] = $student;
+            }
+            $selectedStudents = array_values($studentsById);
+        }
     } catch (Throwable $exception) {
         $searchError = 'Unable to search students right now.';
     }
@@ -631,6 +642,27 @@ $menuGroups = [
             color: rgba(98, 89, 103, 0.68);
         }
 
+        .selective-preview-frame {
+            width: 100%;
+            height: min(74vh, 920px);
+            min-height: 520px;
+            border: 1px solid rgba(45, 45, 45, 0.42);
+            border-radius: 3px;
+            background: #3a3a3a;
+        }
+
+        .preview-download {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 8px 14px;
+            border-radius: 6px;
+            background: var(--primary-soft);
+            color: var(--text);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
         .status-message {
             min-height: 22px;
             margin-top: 8px;
@@ -680,11 +712,24 @@ $menuGroups = [
         }
 
         .selected-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             padding: 12px 14px;
             border-bottom: 1px solid var(--field-line);
             font-size: 0.84rem;
             font-weight: 700;
             color: var(--heading);
+        }
+
+        .clear-selection {
+            border: 1px solid rgba(208, 106, 101, 0.45);
+            border-radius: 3px;
+            background: transparent;
+            color: var(--danger);
+            cursor: pointer;
+            font-size: 0.65rem;
+            padding: 3px 6px;
         }
 
         .student-result {
@@ -885,7 +930,7 @@ $menuGroups = [
                     <p class="subtitle">Search by student name or matric number</p>
 
                     <div class="selective-layout">
-                        <form class="generator-panel" method="get">
+                        <form class="generator-panel" id="searchForm" method="get">
                             <input type="hidden" name="section" value="selective-printing">
                             <div class="selective-search">
                                 <input type="search" name="student_search" value="<?php echo htmlspecialchars($studentSearch); ?>" placeholder="Enter name or matric number" aria-label="Search by student name or matric number" autofocus>
@@ -897,11 +942,14 @@ $menuGroups = [
                         </form>
 
                         <form class="selected-panel" id="selectionForm" method="post" action="generate_batch.php" aria-label="Selected students">
-                            <div class="selected-heading">Selected Students (<?php echo count($searchResults); ?>)</div>
-                            <?php if (empty($searchResults)): ?>
+                            <div class="selected-heading">
+                                <span>Selected Students (<span id="selectedCount"><?php echo count($selectedStudents); ?></span>)</span>
+                                <button type="button" class="clear-selection" id="clearSelection">Cancel all</button>
+                            </div>
+                            <?php if (empty($selectedStudents)): ?>
                                 <div class="empty-results"><?php echo $studentSearch === '' ? 'Search for a student to load results.' : 'No active students matched your search.'; ?></div>
                             <?php else: ?>
-                                <?php foreach ($searchResults as $student): ?>
+                                <?php foreach ($selectedStudents as $student): ?>
                                     <div class="student-result" data-student-row>
                                         <input type="hidden" name="student_ids[]" value="<?php echo (int) $student['id']; ?>">
                                         <div class="student-avatar"><?php echo htmlspecialchars(strtoupper(substr($student['full_name'], 0, 1))); ?></div>
@@ -913,10 +961,18 @@ $menuGroups = [
                                     </div>
                                 <?php endforeach; ?>
                                 <div class="selection-actions">
-                                    <button type="submit" class="btn primary" formaction="generate_batch.php" formmethod="post">Generate Cards</button>
+                                    <input type="hidden" name="preview" value="1">
+                                    <button type="submit" class="btn primary" formaction="generate_batch.php" formmethod="post">Preview Cards</button>
                                 </div>
                             <?php endif; ?>
                         </form>
+                    </div>
+
+                    <div class="preview-box" aria-live="polite">
+                        <div class="preview-inner" id="selectivePreviewState">
+                            <div class="placeholder-icon" aria-hidden="true"></div>
+                            <div class="preview-message">Preview cards will appear here after generation.</div>
+                        </div>
                     </div>
                 </section>
             <?php else: ?>
@@ -994,11 +1050,65 @@ $menuGroups = [
 
                 const heading = selectionForm.querySelector('.selected-heading');
                 const count = selectionForm.querySelectorAll('[data-student-row]').length;
-                heading.textContent = 'Selected Students (' + count + ')';
+                selectionForm.querySelector('#selectedCount').textContent = count;
                 const generateButton = selectionForm.querySelector('[type="submit"]');
                 if (generateButton) {
                     generateButton.disabled = count === 0;
                 }
+            });
+
+            document.getElementById('clearSelection').addEventListener('click', function() {
+                selectionForm.querySelectorAll('[data-student-row]').forEach(function(row) {
+                    row.remove();
+                });
+                selectionForm.querySelector('#selectedCount').textContent = '0';
+                const generateButton = selectionForm.querySelector('[type="submit"]');
+                if (generateButton) {
+                    generateButton.disabled = true;
+                }
+            });
+
+            document.getElementById('searchForm').addEventListener('submit', function() {
+                this.querySelectorAll('input[name="selected_ids[]"]').forEach(function(input) {
+                    input.remove();
+                });
+                selectionForm.querySelectorAll('input[name="student_ids[]"]').forEach(function(input) {
+                    const selectedInput = document.createElement('input');
+                    selectedInput.type = 'hidden';
+                    selectedInput.name = 'selected_ids[]';
+                    selectedInput.value = input.value;
+                    document.getElementById('searchForm').appendChild(selectedInput);
+                });
+            });
+
+            selectionForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+
+                const previewState = document.getElementById('selectivePreviewState');
+                const generateButton = selectionForm.querySelector('[type="submit"]');
+                generateButton.disabled = true;
+                previewState.innerHTML = '<div class="preview-message">Generating selected ID cards...</div>';
+
+                fetch(selectionForm.action, {
+                        method: 'POST',
+                        body: new FormData(selectionForm)
+                    })
+                    .then(function(response) {
+                        if (!response.ok) {
+                            throw new Error('Unable to generate the selected cards.');
+                        }
+                        return response.json();
+                    })
+                    .then(function(data) {
+                        previewState.innerHTML = '<iframe class="selective-preview-frame" title="Selected ID card PDF preview" src="' + data.pdf_url + '"></iframe>' +
+                            '<a class="preview-download" href="' + data.pdf_url + '" download="' + data.download_name + '">Download PDF</a>';
+                    })
+                    .catch(function(error) {
+                        previewState.innerHTML = '<div class="preview-message">' + error.message + '</div>';
+                    })
+                    .finally(function() {
+                        generateButton.disabled = selectionForm.querySelectorAll('[data-student-row]').length === 0;
+                    });
             });
         })();
     </script>

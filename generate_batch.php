@@ -22,6 +22,7 @@ $collegeId = $isCli
 $studentIds = !$isCli && isset($_POST['student_ids']) && is_array($_POST['student_ids'])
     ? $_POST['student_ids']
     : [];
+$preview = !$isCli && isset($_POST['preview']) && $_POST['preview'] === '1';
 $inline = !$isCli && isset($_GET['inline']) && $_GET['inline'] === '1';
 
 if (!$collegeId && empty($studentIds)) {
@@ -87,6 +88,95 @@ try {
     }
 
     $downloadName = basename($result['pdf_path']);
+    if ($preview) {
+        $pdfUrl = 'output/' . rawurlencode($downloadName);
+        header('Content-Type: application/json');
+        echo json_encode([
+            'pdf_url' => $pdfUrl,
+            'download_name' => $downloadName,
+            'success_count' => $result['success_count'],
+        ]);
+        exit(0);
+?>
+        <!doctype html>
+        <html lang="en">
+
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Preview ID Cards</title>
+            <style>
+                body {
+                    margin: 0;
+                    padding: 24px;
+                    background: #f5f3f4;
+                    font-family: "Segoe UI", sans-serif;
+                    color: #2f2d30;
+                }
+
+                .toolbar {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 16px;
+                    max-width: 1100px;
+                    margin: 0 auto 16px;
+                }
+
+                .toolbar h1 {
+                    margin: 0;
+                    font-size: 1.3rem;
+                }
+
+                .download {
+                    padding: 10px 16px;
+                    border-radius: 6px;
+                    background: #d8b1ea;
+                    color: #2f2d30;
+                    text-decoration: none;
+                    font-weight: 600;
+                }
+
+                iframe {
+                    display: block;
+                    width: min(1100px, 100%);
+                    height: calc(100vh - 100px);
+                    min-height: 560px;
+                    margin: 0 auto;
+                    border: 1px solid #d8d1d7;
+                    background: #fff;
+                }
+
+                @media (max-width: 600px) {
+                    body {
+                        padding: 12px;
+                    }
+
+                    .toolbar {
+                        align-items: flex-start;
+                        flex-direction: column;
+                    }
+
+                    iframe {
+                        min-height: 70vh;
+                    }
+                }
+            </style>
+        </head>
+
+        <body>
+            <div class="toolbar">
+                <h1><?php echo (int) $result['success_count']; ?> ID card(s) ready</h1>
+                <a class="download" href="<?php echo htmlspecialchars($pdfUrl, ENT_QUOTES, 'UTF-8'); ?>" download="<?php echo htmlspecialchars($downloadName, ENT_QUOTES, 'UTF-8'); ?>">Download PDF</a>
+            </div>
+            <iframe src="<?php echo htmlspecialchars($pdfUrl, ENT_QUOTES, 'UTF-8'); ?>" title="ID card PDF preview"></iframe>
+        </body>
+
+        </html>
+<?php
+        exit(0);
+    }
+
     header('Content-Type: application/pdf');
     header('Content-Disposition: ' . ($inline ? 'inline' : 'attachment') . '; filename="' . addcslashes($downloadName, "\\\"") . '"');
     header('Content-Length: ' . filesize($result['pdf_path']));
