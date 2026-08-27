@@ -975,13 +975,13 @@ $menuGroups = [
     </div>
 
     <script>
-        (function () {
+        (function() {
             const selectionForm = document.getElementById('selectionForm');
             if (!selectionForm) {
                 return;
             }
 
-            selectionForm.addEventListener('click', function (event) {
+            selectionForm.addEventListener('click', function(event) {
                 const removeButton = event.target.closest('.student-remove');
                 if (!removeButton) {
                     return;

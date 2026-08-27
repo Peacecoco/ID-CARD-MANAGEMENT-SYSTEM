@@ -24,7 +24,7 @@ $studentIds = !$isCli && isset($_POST['student_ids']) && is_array($_POST['studen
     : [];
 $inline = !$isCli && isset($_GET['inline']) && $_GET['inline'] === '1';
 
-    if (!$collegeId && empty($studentIds)) {
+if (!$collegeId && empty($studentIds)) {
     $message = $isCli
         ? "Usage: php generate_batch.php <college_id>\n"
         : 'Missing or invalid college_id.';

@@ -60,7 +60,7 @@ class Database
 
     public function getActiveStudentsByIds(array $studentIds): array
     {
-        $studentIds = array_values(array_unique(array_filter(array_map('intval', $studentIds), static fn (int $id): bool => $id > 0)));
+        $studentIds = array_values(array_unique(array_filter(array_map('intval', $studentIds), static fn(int $id): bool => $id > 0)));
         if (empty($studentIds)) {
             return [];
         }

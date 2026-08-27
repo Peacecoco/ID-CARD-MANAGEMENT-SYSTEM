@@ -85,9 +85,9 @@ class Renderer
             'margin_left'  => 0,
             'margin_right' => 0,
             'margin_top'   => 0,
-            'margin_bottom'=> 0,
-            'margin_header'=> 0,
-            'margin_footer'=> 0,
+            'margin_bottom' => 0,
+            'margin_header' => 0,
+            'margin_footer' => 0,
         ]);
 
         $outputFile = OUTPUT_PATH . '/' . ($batchCollegeId ? $college['code'] : 'SELECTIVE') . '_' . date('Ymd_His') . '.pdf';
