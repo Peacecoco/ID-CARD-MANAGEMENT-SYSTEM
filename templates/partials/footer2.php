@@ -6,7 +6,7 @@ $collegeImagePath = mpdfAssetUri(__DIR__ . '/../../' . ltrim($college['logo_path
 <div class="footer-wrapper" style="background-image: url('<?= htmlspecialchars($collegeImagePath) ?>');">
     <table class="footer-table" width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr class="footer-row">
-            <td class="footer-year">
+            <td class="footer-year <?= !empty($isTemporary) ? 'temporary-footer-label' : '' ?>">
                 <svg class="vertical-svg" width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
                     <text x="60" y="60" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 60 60)" style="font-family: Arial, sans-serif; font-size:18pt; font-weight:bold; fill:#000000;"><?= htmlspecialchars(
                         $student['validity_start'] . '-' . $student['validity_end']
@@ -24,7 +24,7 @@ $collegeImagePath = mpdfAssetUri(__DIR__ . '/../../' . ltrim($college['logo_path
                 <?php endif; ?>
             </td>
 
-            <td class="footer-student-label">
+            <td class="footer-student-label <?= !empty($isTemporary) ? 'temporary-footer-label' : '' ?>">
                 <svg class="vertical-svg" width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
                     <text x="60" y="60" text-anchor="middle" dominant-baseline="middle" transform="rotate(-90 60 60)" style="font-family: Arial, sans-serif; font-size:18pt; font-weight:bold; fill:#000000;">STUDENT</text>
                 </svg>
@@ -103,18 +103,26 @@ $collegeImagePath = mpdfAssetUri(__DIR__ . '/../../' . ltrim($college['logo_path
 }
 
 .temporary-photo {
-    height: 72%;
+    height: 68%;
     margin: 3% auto 0;
 }
 
+.temporary-footer-label {
+    transform: translateY(3%);
+}
+
 .temporary-id-label {
-    height: 20%;
-    margin-top: 2%;
+    height: 22%;
+    margin: 2% auto 3%;
+    padding-top: 5%;
+    box-sizing: border-box;
     text-align: center;
     font-family: Arial, sans-serif;
-    font-size: 7pt;
+    font-size: 18pt;
     line-height: 1;
     font-weight: bold;
     color: #000000;
+    white-space: nowrap;
+    transform: translateY(35%) scaleX(0.7);
 }
 </style>
