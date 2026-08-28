@@ -109,4 +109,43 @@ class Database
         );
         $stmt->execute([$batchId, $studentId, $status, $errorMessage]);
     }
+
+    public function getBatchReports(?int $collegeId = null, ?string $status = null, ?string $fromDate = null, ?string $toDate = null): array
+    {
+        $conditions = [];
+        $parameters = [];
+
+        if ($collegeId) {
+            $conditions[] = 'b.college_id = ?';
+            $parameters[] = $collegeId;
+        }
+        if ($status && in_array($status, ['pending', 'completed', 'failed'], true)) {
+            $conditions[] = 'b.status = ?';
+            $parameters[] = $status;
+        }
+        if ($fromDate !== null && preg_match('/^\d{4}-\d{2}-\d{2}$/', $fromDate)) {
+            $conditions[] = 'b.created_at >= ?';
+            $parameters[] = $fromDate . ' 00:00:00';
+        }
+        if ($toDate !== null && preg_match('/^\d{4}-\d{2}-\d{2}$/', $toDate)) {
+            $conditions[] = 'b.created_at <= ?';
+            $parameters[] = $toDate . ' 23:59:59';
+        }
+
+        $where = $conditions ? 'WHERE ' . implode(' AND ', $conditions) : '';
+        $stmt = $this->pdo->prepare(
+            "SELECT b.id, b.generated_by, b.student_count, b.pdf_path, b.status, b.created_at,
+                    c.name AS college_name, c.code AS college_code,
+                    SUM(i.status = 'success') AS success_count,
+                    SUM(i.status = 'failed') AS failure_count
+             FROM id_card_batches b
+             LEFT JOIN colleges c ON c.id = b.college_id
+             LEFT JOIN id_card_batch_items i ON i.batch_id = b.id
+             {$where}
+             GROUP BY b.id, b.generated_by, b.student_count, b.pdf_path, b.status, b.created_at, c.name, c.code
+             ORDER BY b.created_at DESC, b.id DESC"
+        );
+        $stmt->execute($parameters);
+        return $stmt->fetchAll();
+    }
 }

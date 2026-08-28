@@ -66,7 +66,7 @@ try {
     $renderer = new Renderer($db);
     $result = empty($studentIds)
         ? $renderer->generateCollegeBatch($collegeId, generatedBy: $isCli ? 'cli' : 'web', temporary: $temporary)
-        : $renderer->generateStudentsBatch($students, generatedBy: 'web');
+        : $renderer->generateStudentsBatch($students, generatedBy: 'selective');
 
     if ($isCli) {
         echo "\nBatch complete.\n";

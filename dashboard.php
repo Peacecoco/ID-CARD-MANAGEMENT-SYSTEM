@@ -7,6 +7,7 @@ $section = filter_input(INPUT_GET, 'section', FILTER_UNSAFE_RAW) ?: '';
 $isSelectivePrinting = $section === 'selective-printing';
 $isPermanentId = $section === 'permanent-id' || $section === '';
 $isTemporaryId = $section === 'temporary-id';
+$isReport = $section === 'reports';
 $studentSearch = trim((string) (filter_input(INPUT_GET, 'student_search', FILTER_UNSAFE_RAW) ?: ''));
 $selectedIds = isset($_GET['selected_ids']) && is_array($_GET['selected_ids']) ? $_GET['selected_ids'] : [];
 $searchResults = [];
@@ -21,6 +22,12 @@ $collegeOptions = [
 $selectedCollegeId = filter_input(INPUT_GET, 'college_id', FILTER_VALIDATE_INT) ?: 0;
 $studentCount = 0;
 $studentLoadError = '';
+$reportRows = [];
+$reportError = '';
+$reportCollegeId = filter_input(INPUT_GET, 'report_college_id', FILTER_VALIDATE_INT) ?: 0;
+$reportStatus = filter_input(INPUT_GET, 'report_status', FILTER_UNSAFE_RAW) ?: '';
+$reportFrom = filter_input(INPUT_GET, 'report_from', FILTER_UNSAFE_RAW) ?: '';
+$reportTo = filter_input(INPUT_GET, 'report_to', FILTER_UNSAFE_RAW) ?: '';
 
 if ($isPermanentId || $isTemporaryId) {
     try {
@@ -57,6 +64,19 @@ if ($isSelectivePrinting) {
     }
 }
 
+if ($isReport) {
+    try {
+        $database = new Database();
+        $collegeRows = $database->getAllColleges();
+        $reportRows = $database->getBatchReports($reportCollegeId ?: null, $reportStatus, $reportFrom, $reportTo);
+    } catch (Throwable $exception) {
+        $reportError = 'Unable to load report data right now.';
+        $collegeRows = [];
+    }
+} elseif (!isset($collegeRows)) {
+    $collegeRows = [];
+}
+
 $currentUser = [
     'name' => 'Mr. Olatokun',
     'role' => 'Administrator',
@@ -77,7 +97,9 @@ $menuGroups = [
     ['label' => 'Course Control', 'expanded' => false, 'items' => []],
     ['label' => 'Dashboards', 'expanded' => false, 'items' => []],
     ['label' => 'Gap Analysis', 'expanded' => false, 'items' => []],
-    ['label' => 'Report', 'expanded' => false, 'items' => []],
+    ['label' => 'Report', 'expanded' => $isReport, 'items' => [
+        ['label' => 'Reports and Audit', 'active' => $isReport, 'children' => [], 'href' => 'dashboard.php?section=reports'],
+    ]],
 ];
 ?>
 <!DOCTYPE html>
@@ -848,9 +870,122 @@ $menuGroups = [
             text-align: center;
         }
 
+        .report-toolbar {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            padding: 16px;
+            margin-bottom: 18px;
+            border: 1px solid var(--field-line);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.45);
+        }
+
+        .report-toolbar label {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            color: var(--muted-strong);
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+
+        .report-toolbar select,
+        .report-toolbar input {
+            width: 100%;
+            height: 40px;
+            padding: 0 10px;
+            border: 1px solid var(--field-line);
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.72);
+            color: var(--text);
+        }
+
+        .report-toolbar .btn {
+            align-self: end;
+            min-width: 0;
+            height: 40px;
+        }
+
+        .report-summary {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .report-stat {
+            flex: 1 1 160px;
+            padding: 14px 16px;
+            border: 1px solid var(--field-line);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.45);
+        }
+
+        .report-stat strong {
+            display: block;
+            font-size: 1.35rem;
+            color: var(--heading);
+        }
+
+        .report-stat span {
+            color: var(--muted);
+            font-size: 0.78rem;
+        }
+
+        .report-table-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--field-line);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.45);
+        }
+
+        .report-table {
+            width: 100%;
+            min-width: 760px;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.8rem;
+        }
+
+        .report-table th,
+        .report-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--field-line);
+            white-space: nowrap;
+        }
+
+        .report-table th {
+            color: var(--muted-strong);
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .report-table tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .report-status {
+            font-weight: 700;
+            text-transform: capitalize;
+        }
+
+        .report-status.completed { color: var(--success); }
+        .report-status.failed { color: var(--danger); }
+
+        .report-link {
+            color: var(--muted-strong);
+            font-weight: 600;
+        }
+
         @media (max-width: 800px) {
             .selective-layout {
                 grid-template-columns: 1fr;
+            }
+
+            .report-toolbar {
+                grid-template-columns: 1fr 1fr;
             }
         }
 
@@ -896,6 +1031,10 @@ $menuGroups = [
             .user-panel {
                 width: 100%;
                 justify-content: flex-end;
+            }
+
+            .report-toolbar {
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -1040,7 +1179,7 @@ $menuGroups = [
                         <input type="hidden" name="section" value="<?php echo $isTemporaryId ? 'temporary-id' : 'permanent-id'; ?>">
                         <div class="form-grid">
                             <div class="field full">
-                                <div class="field-head">College and level</div>
+                                <div class="field-head">College</div>
                                 <div class="input-shell">
                                     <select name="college_id" id="college_id" required onchange="this.form.submit()">
                                         <option value="">Select college</option>
@@ -1082,6 +1221,92 @@ $menuGroups = [
                             <?php endif; ?>
                         </div>
                     </div>
+                </section>
+            <?php elseif ($isReport): ?>
+                <section class="page" aria-labelledby="page-title">
+                    <div class="crumbs" aria-label="Breadcrumb">
+                        <span>Home</span>
+                        <span class="sep">›</span>
+                        <span>Report</span>
+                        <span class="sep">›</span>
+                        <span>Reports and Audit</span>
+                    </div>
+
+                    <h1 id="page-title">Reports and Audit</h1>
+                    <p class="subtitle">Review generated card batches and per-student results</p>
+
+                    <form class="report-toolbar" method="get" action="dashboard.php">
+                        <input type="hidden" name="section" value="reports">
+                        <label>College
+                            <select name="report_college_id">
+                                <option value="">All colleges</option>
+                                <?php foreach ($collegeRows as $college): ?>
+                                    <option value="<?php echo (int) $college['id']; ?>" <?php echo $reportCollegeId === (int) $college['id'] ? 'selected' : ''; ?>>
+                                        <?php echo htmlspecialchars($college['name']); ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </label>
+                        <label>Status
+                            <select name="report_status">
+                                <option value="">All statuses</option>
+                                <?php foreach (['completed', 'pending', 'failed'] as $statusOption): ?>
+                                    <option value="<?php echo $statusOption; ?>" <?php echo $reportStatus === $statusOption ? 'selected' : ''; ?>><?php echo ucfirst($statusOption); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </label>
+                        <label>From date
+                            <input type="date" name="report_from" value="<?php echo htmlspecialchars($reportFrom); ?>">
+                        </label>
+                        <label>To date
+                            <input type="date" name="report_to" value="<?php echo htmlspecialchars($reportTo); ?>">
+                        </label>
+                        <button class="btn primary" type="submit">Apply filters</button>
+                    </form>
+
+                    <?php if ($reportError !== ''): ?>
+                        <div class="status-message error"><?php echo htmlspecialchars($reportError); ?></div>
+                    <?php endif; ?>
+
+                    <?php
+                    $reportBatchCount = count($reportRows);
+                    $reportCardCount = array_sum(array_map(static fn(array $row): int => (int) $row['student_count'], $reportRows));
+                    $reportSuccessCount = array_sum(array_map(static fn(array $row): int => (int) $row['success_count'], $reportRows));
+                    $reportFailureCount = array_sum(array_map(static fn(array $row): int => (int) $row['failure_count'], $reportRows));
+                    ?>
+                    <div class="report-summary">
+                        <div class="report-stat"><strong><?php echo $reportBatchCount; ?></strong><span>Batches</span></div>
+                        <div class="report-stat"><strong><?php echo $reportCardCount; ?></strong><span>Cards requested</span></div>
+                        <div class="report-stat"><strong><?php echo $reportSuccessCount; ?></strong><span>Cards completed</span></div>
+                        <div class="report-stat"><strong><?php echo $reportFailureCount; ?></strong><span>Student failures</span></div>
+                    </div>
+
+                    <?php if (empty($reportRows)): ?>
+                        <div class="preview-box"><div class="preview-message">No batch records match these filters.</div></div>
+                    <?php else: ?>
+                        <div class="report-table-wrap">
+                            <table class="report-table">
+                                <thead>
+                                    <tr><th>Reference</th><th>Date</th><th>College</th><th>Cards</th><th>Success</th><th>Failed</th><th>Status</th><th>PDF</th></tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($reportRows as $row): ?>
+                                        <?php $referencePrefix = $row['generated_by'] === 'selective' ? 'SEL' : ($row['college_code'] ?: 'BATCH'); ?>
+                                        <tr>
+                                            <td><strong><?php echo htmlspecialchars($referencePrefix . '/' . str_pad((string) $row['id'], 3, '0', STR_PAD_LEFT)); ?></strong></td>
+                                            <td><?php echo htmlspecialchars($row['created_at']); ?></td>
+                                            <td><?php echo htmlspecialchars($row['college_name'] ?: 'Mixed selection'); ?></td>
+                                            <td><?php echo (int) $row['student_count']; ?></td>
+                                            <td><?php echo (int) $row['success_count']; ?></td>
+                                            <td><?php echo (int) $row['failure_count']; ?></td>
+                                            <td class="report-status <?php echo htmlspecialchars($row['status']); ?>"><?php echo htmlspecialchars($row['status']); ?></td>
+                                            <td><?php if (is_file($row['pdf_path'])): ?><a class="report-link" href="output/<?php echo rawurlencode(basename($row['pdf_path'])); ?>" target="_blank" rel="noopener">Open PDF</a><?php else: ?>Unavailable<?php endif; ?></td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
                 </section>
             <?php endif; ?>
         </main>

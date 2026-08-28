@@ -16,7 +16,6 @@ CREATE TABLE colleges (
     template_key VARCHAR(50) NOT NULL,          -- only matters if a college needs a layout override; otherwise shared_front.php is used for all
     logo_path VARCHAR(255) NOT NULL,            -- college or university crest
     primary_color VARCHAR(7) NOT NULL DEFAULT '#1a3fa0',  -- drives header + footer theme
-    footer_text VARCHAR(150) NULL,              -- optional college-specific motto/line
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -71,7 +70,7 @@ CREATE TABLE id_card_batch_items (
 -- ------------------------------------------------------------
 -- Sample seed data
 -- ------------------------------------------------------------
-INSERT INTO colleges (name, code, template_key, logo_path, primary_color, footer_text) VALUES
-('College of Engineering', 'ENG', 'engineering', '/assets/logos/cu_crest.png', '#1a3fa0', 'College of Engineering, Covenant University'),  -- blue
-('College of Law', 'LAW', 'law', '/assets/logos/cu_crest.png', '#c9a300', 'College of Law, Covenant University'),                          -- yellow
-('College of Science', 'SCI', 'science', '/assets/logos/cu_crest.png', '#1f6b2e', 'College of Science, Covenant University');              -- green
+INSERT INTO colleges (name, code, template_key, logo_path, primary_color) VALUES
+('College of Engineering', 'ENG', 'engineering', '/assets/images/coe.jpg', '#1a3fa0'),  -- blue
+('College of Law', 'LAW', 'law', '/assets/images/clds.jpg', '#c9a300'),                -- yellow
+('College of Science', 'SCI', 'science', '/assets/images/cst.jpg', '#1f6b2e');         -- green
