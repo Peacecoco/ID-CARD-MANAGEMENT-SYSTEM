@@ -26,8 +26,22 @@ $reportRows = [];
 $reportError = '';
 $reportCollegeId = filter_input(INPUT_GET, 'report_college_id', FILTER_VALIDATE_INT) ?: 0;
 $reportStatus = filter_input(INPUT_GET, 'report_status', FILTER_UNSAFE_RAW) ?: '';
-$reportFrom = filter_input(INPUT_GET, 'report_from', FILTER_UNSAFE_RAW) ?: '';
-$reportTo = filter_input(INPUT_GET, 'report_to', FILTER_UNSAFE_RAW) ?: '';
+$reportFromInput = trim((string) (filter_input(INPUT_GET, 'report_from', FILTER_UNSAFE_RAW) ?: ''));
+$reportToInput = trim((string) (filter_input(INPUT_GET, 'report_to', FILTER_UNSAFE_RAW) ?: ''));
+$reportFrom = '';
+$reportTo = '';
+
+foreach ([['input' => $reportFromInput, 'output' => 'reportFrom'], ['input' => $reportToInput, 'output' => 'reportTo']] as $reportDate) {
+    if ($reportDate['input'] === '') {
+        continue;
+    }
+
+    $parsedDate = DateTime::createFromFormat('d/m/Y', $reportDate['input']);
+    $dateErrors = DateTime::getLastErrors();
+    if ($parsedDate !== false && ($dateErrors === false || ($dateErrors['warning_count'] === 0 && $dateErrors['error_count'] === 0))) {
+        ${$reportDate['output']} = $parsedDate->format('Y-m-d');
+    }
+}
 
 if ($isPermanentId || $isTemporaryId) {
     try {
@@ -97,7 +111,7 @@ $menuGroups = [
     ['label' => 'Course Control', 'expanded' => false, 'items' => []],
     ['label' => 'Dashboards', 'expanded' => false, 'items' => []],
     ['label' => 'Gap Analysis', 'expanded' => false, 'items' => []],
-    ['label' => 'Report', 'expanded' => $isReport, 'items' => [
+    ['label' => 'Report', 'expanded' => $isReport, 'href' => 'dashboard.php?section=reports', 'items' => [
         ['label' => 'Reports and Audit', 'active' => $isReport, 'children' => [], 'href' => 'dashboard.php?section=reports'],
     ]],
 ];
@@ -971,8 +985,13 @@ $menuGroups = [
             text-transform: capitalize;
         }
 
-        .report-status.completed { color: var(--success); }
-        .report-status.failed { color: var(--danger); }
+        .report-status.completed {
+            color: var(--success);
+        }
+
+        .report-status.failed {
+            color: var(--danger);
+        }
 
         .report-link {
             color: var(--muted-strong);
@@ -1065,10 +1084,17 @@ $menuGroups = [
             <nav class="sidebar-nav" aria-label="Main navigation">
                 <?php foreach ($menuGroups as $group): ?>
                     <div class="nav-item <?php echo !empty($group['expanded']) ? 'open' : ''; ?> <?php echo !empty($group['active']) ? 'active' : ''; ?>">
-                        <div class="nav-label" tabindex="0" aria-label="<?php echo htmlspecialchars($group['label']); ?>">
-                            <span><?php echo htmlspecialchars($group['label']); ?></span>
-                            <span class="caret">▾</span>
-                        </div>
+                        <?php if (!empty($group['href'])): ?>
+                            <a class="nav-label" href="<?php echo htmlspecialchars($group['href']); ?>" aria-label="<?php echo htmlspecialchars($group['label']); ?>">
+                                <span><?php echo htmlspecialchars($group['label']); ?></span>
+                                <span class="caret">▾</span>
+                            </a>
+                        <?php else: ?>
+                            <div class="nav-label" tabindex="0" aria-label="<?php echo htmlspecialchars($group['label']); ?>">
+                                <span><?php echo htmlspecialchars($group['label']); ?></span>
+                                <span class="caret">▾</span>
+                            </div>
+                        <?php endif; ?>
 
                         <?php if (!empty($group['items'])): ?>
                             <div class="nav-submenu">
@@ -1256,10 +1282,10 @@ $menuGroups = [
                             </select>
                         </label>
                         <label>From date
-                            <input type="date" name="report_from" value="<?php echo htmlspecialchars($reportFrom); ?>">
+                            <input type="text" name="report_from" value="<?php echo htmlspecialchars($reportFromInput); ?>" placeholder="DD/MM/YYYY" inputmode="numeric" pattern="\d{2}/\d{2}/\d{4}">
                         </label>
                         <label>To date
-                            <input type="date" name="report_to" value="<?php echo htmlspecialchars($reportTo); ?>">
+                            <input type="text" name="report_to" value="<?php echo htmlspecialchars($reportToInput); ?>" placeholder="DD/MM/YYYY" inputmode="numeric" pattern="\d{2}/\d{2}/\d{4}">
                         </label>
                         <button class="btn primary" type="submit">Apply filters</button>
                     </form>
@@ -1282,19 +1308,30 @@ $menuGroups = [
                     </div>
 
                     <?php if (empty($reportRows)): ?>
-                        <div class="preview-box"><div class="preview-message">No batch records match these filters.</div></div>
+                        <div class="preview-box">
+                            <div class="preview-message">No batch records match these filters.</div>
+                        </div>
                     <?php else: ?>
                         <div class="report-table-wrap">
                             <table class="report-table">
                                 <thead>
-                                    <tr><th>Reference</th><th>Date</th><th>College</th><th>Cards</th><th>Success</th><th>Failed</th><th>Status</th><th>PDF</th></tr>
+                                    <tr>
+                                        <th>Reference</th>
+                                        <th>Date</th>
+                                        <th>College</th>
+                                        <th>Cards</th>
+                                        <th>Success</th>
+                                        <th>Failed</th>
+                                        <th>Status</th>
+                                        <th>PDF</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($reportRows as $row): ?>
                                         <?php $referencePrefix = $row['generated_by'] === 'selective' ? 'SEL' : ($row['college_code'] ?: 'BATCH'); ?>
                                         <tr>
                                             <td><strong><?php echo htmlspecialchars($referencePrefix . '/' . str_pad((string) $row['id'], 3, '0', STR_PAD_LEFT)); ?></strong></td>
-                                            <td><?php echo htmlspecialchars($row['created_at']); ?></td>
+                                            <td><?php echo htmlspecialchars((new DateTime($row['created_at']))->format('d/m/Y H:i')); ?></td>
                                             <td><?php echo htmlspecialchars($row['college_name'] ?: 'Mixed selection'); ?></td>
                                             <td><?php echo (int) $row['student_count']; ?></td>
                                             <td><?php echo (int) $row['success_count']; ?></td>

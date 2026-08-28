@@ -90,7 +90,8 @@ class Renderer
             'margin_footer' => 0,
         ]);
 
-        $outputFile = OUTPUT_PATH . '/' . ($batchCollegeId ? $college['code'] : 'SELECTIVE') . '_' . date('Ymd_His') . '.pdf';
+        $outputPrefix = $generatedBy === 'selective' ? 'SEL' : $college['code'];
+        $outputFile = OUTPUT_PATH . '/' . $outputPrefix . '_' . date('Ymd_His') . '.pdf';
         $batchId = $this->db->createBatch($batchCollegeId, count($students), $outputFile, $generatedBy);
 
         $successCount = 0;
