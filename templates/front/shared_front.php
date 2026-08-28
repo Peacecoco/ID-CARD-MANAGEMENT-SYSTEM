@@ -17,7 +17,7 @@
         </div>
 
         <div class="content-area">
-            <?php $middlePhotoPath = $photoPath; include TEMPLATES_PATH . '/partials/middle.php'; ?>
+            <?php include TEMPLATES_PATH . '/partials/middle.php'; ?>
         </div>
         <div class="footer-wrap">
             <?php include TEMPLATES_PATH . '/partials/footer2.php'; ?>

@@ -1,5 +1,4 @@
 <?php
-$footerImage = mpdfAssetUri(__DIR__ . '/../../assets/images/image.png');
 $collegeImagePath = mpdfAssetUri(__DIR__ . '/../../' . ltrim($college['logo_path'], '/'));
 ?>
 

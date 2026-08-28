@@ -13,7 +13,6 @@ define('DB_PASS', '');
 define('BASE_PATH', __DIR__);
 define('TEMPLATES_PATH', BASE_PATH . '/templates');
 define('OUTPUT_PATH', BASE_PATH . '/output');
-define('UPLOADS_PATH', BASE_PATH . '/uploads/photos');
 define('PROCESSED_PHOTOS_PATH', BASE_PATH . '/uploads/photos_processed');
 define('MPDF_TEMP_PATH', BASE_PATH . '/tmp/mpdf');
 

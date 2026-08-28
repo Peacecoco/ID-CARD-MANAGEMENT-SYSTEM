@@ -84,12 +84,6 @@
         margin: 0 auto;
     }
 
-    .signature-line {
-        margin: 0;
-        padding: 0;
-        line-height: 1;
-    }
-
     .signature-label {
     margin-top: 0.8mm;
     line-height: 1;
